@@ -22,7 +22,7 @@ function varargout = StimGUI(varargin)
 
 % Edit the above text to modify the response to help StimGUI
 
-% Last Modified by GUIDE v2.5 18-Jun-2014 13:38:57
+% Last Modified by GUIDE v2.5 18-Jun-2014 19:18:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,7 +52,7 @@ function StimGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to StimGUI (see VARARGIN)
 
-global imZoom stimDur stimPow stimRot stimOsc imData imMeta imRef stimROI armed
+global imZoom stimDur stimPow stimRot stimOsc imData imMeta imRef stimROI armed hStimShutter
 
 % Choose default command line output for StimGUI
 handles.output = hObject;
@@ -74,6 +74,8 @@ stimRot = 1e3;
 stimOsc = stimRot / (6-1/3);
 stimROI = imellipse(gca, [0 0 0 0]);
 
+hStimShutter = daq.createSession('ni');
+addDigitalChannel(hStimShutter,'ExtGalvo','Port0/Line1','OutputOnly');
 sHz = 1e5;
 sig = zeros(stimDur*1e-3*sHz,3);
 createStimTasks(sig,sHz);
@@ -185,7 +187,7 @@ function gainSlider_Callback(hObject, eventdata, handles)
 global imRef stimROI
 imGain = 10^(round(100*get(hObject,'Value'))/100);
 set(hObject,'Value',log10(imGain)),
-set(handles.gainText,'String',sprintf('Gain: %1.2d',imGain)),
+%set(handles.gainText,'String',sprintf('Gain: %1.2d',imGain)),
 roiPos = getPosition(stimROI);
 axes(handles.axes1),
 imshow(imRef*imGain),
@@ -260,11 +262,20 @@ deleteStimTasks,
 sHz = 1e5;
 %create stim signals
 [xSig,ySig,pockSig] = createStimSignals(sHz);
+%create session to preposition mirror
+%control(hStim,'DAQmx_Val_Task_Unreserve'),
+hStimMirrorPrep = daq.createSession('ni');
+hMirrors = addAnalogOutputChannel(hStimMirrorPrep,'ExtGalvo',[0 1],'Voltage');
+hMirrors(1).Range=[-5 5];
+hMirrors(2).Range=[-5 5];
+outputSingleScan(hStimMirrorPrep,[xSig(end),ySig(end)])
+delete(hStimMirrorPrep),
 %create stim tasks
 createStimTasks([xSig,ySig,pockSig],sHz);
-%initialize / arm/ prepare tasks
+%Write task data
 writeAnalogData(hStim, [xSig,ySig], 60,false),
 writeAnalogData(hStimPock, pockSig, 60,false),
+%Commit Tasks
 control(hStim,'DAQmx_Val_Task_Commit'),
 control(hStimPock,'DAQmx_Val_Task_Commit'),
 armed = 1;
@@ -306,3 +317,22 @@ stimFileName = input('Name this Stimulation Trial: ','s');
 saveFullFile = fullfile(saveStimDir,stimFileName);
 
 save(saveFullFile,'data')
+
+
+% --- Executes on button press in shutterToggleButton.
+function shutterToggleButton_Callback(hObject, eventdata, handles)
+% hObject    handle to shutterToggleButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global hStimShutter
+
+if strcmp('Open Shutter',get(hObject,'String'))
+    outputSingleScan(hStimShutter,1),
+    set(hObject,'String','Close Shutter'),
+    set(handles.Stimpushbutton,'BackgroundColor',[0 1 0])
+elseif strcmp('Close Shutter',get(hObject,'String'))
+    outputSingleScan(hStimShutter,0),
+    set(hObject,'String','Open Shutter'),
+    set(handles.Stimpushbutton,'BackgroundColor',[1 0 0])
+end
