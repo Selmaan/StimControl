@@ -52,7 +52,7 @@ function StimGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to StimGUI (see VARARGIN)
 
-global imZoom stimDur stimPow stimRot stimOsc imData imMeta imRef stimROI armed hStimShutter
+global imZoom stimDur stimPow stimRot stimOsc imData imMeta imRef stimROI hStimShutter hStimMirrorPrep
 
 % Choose default command line output for StimGUI
 handles.output = hObject;
@@ -74,13 +74,18 @@ stimRot = 1e3;
 stimOsc = stimRot / (6-1/3);
 stimROI = imellipse(gca, [0 0 0 0]);
 
+%create session to control shutter
 hStimShutter = daq.createSession('ni');
 addDigitalChannel(hStimShutter,'ExtGalvo','Port0/Line1','OutputOnly');
+%create session to preposition mirror
+hStimMirrorPrep = daq.createSession('ni');
+hMirrors = addAnalogOutputChannel(hStimMirrorPrep,'ExtGalvo',[0 1],'Voltage');
+hMirrors(1).Range=[-5 5];
+hMirrors(2).Range=[-5 5];
 sHz = 1e5;
 sig = zeros(stimDur*1e-3*sHz,3);
 createStimTasks(sig,sHz);
 deleteStimTasks;
-armed = 0;
 
 % UIWAIT makes StimGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -135,14 +140,16 @@ function Stimpushbutton_Callback(hObject, eventdata, handles)
 
 home,
 
-global hStim hStimPock armed frameNum stimFrames
+global hStim hStimPock frameNum stimFrames hStimMirrorPrep
 
-if armed==0
+if strcmp('Arm Stimulation',get(handles.armButton,'String'))
     deleteStimTasks,
 
     sHz = 1e5;
     %create stim signals
     [xSig,ySig,pockSig] = createStimSignals(sHz);
+    %preposition mirrors
+    outputSingleScan(hStimMirrorPrep,[xSig(1),ySig(1)])
     %create stim tasks
     createStimTasks([xSig,ySig,pockSig],sHz);
     %initialize / arm/ prepare tasks
@@ -151,6 +158,8 @@ if armed==0
     control(hStim,'DAQmx_Val_Task_Commit'),
     control(hStimPock,'DAQmx_Val_Task_Commit'),
     pause(1e-3),
+elseif strcmp('Armed!',get(handles.armButton,'String'))
+    set(handles.armButton,'String','Arm Stimulation')
 end
 
 %Loop to be sure tasks are started before beginning of next frame
@@ -171,7 +180,6 @@ stop(hStim),
 stop(hStimPock),
 clear(hStim),
 clear(hStimPock),
-armed = 0;
 display('Ready...'),
 
 
@@ -255,21 +263,14 @@ function armButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global hStim hStimPock
+global hStim hStimPock hStimMirrorPrep
 
 deleteStimTasks,
 
 sHz = 1e5;
 %create stim signals
 [xSig,ySig,pockSig] = createStimSignals(sHz);
-%create session to preposition mirror
-%control(hStim,'DAQmx_Val_Task_Unreserve'),
-hStimMirrorPrep = daq.createSession('ni');
-hMirrors = addAnalogOutputChannel(hStimMirrorPrep,'ExtGalvo',[0 1],'Voltage');
-hMirrors(1).Range=[-5 5];
-hMirrors(2).Range=[-5 5];
-outputSingleScan(hStimMirrorPrep,[xSig(end),ySig(end)])
-delete(hStimMirrorPrep),
+outputSingleScan(hStimMirrorPrep,[xSig(1),ySig(1)])
 %create stim tasks
 createStimTasks([xSig,ySig,pockSig],sHz);
 %Write task data
@@ -278,8 +279,7 @@ writeAnalogData(hStimPock, pockSig, 60,false),
 %Commit Tasks
 control(hStim,'DAQmx_Val_Task_Commit'),
 control(hStimPock,'DAQmx_Val_Task_Commit'),
-armed = 1;
-            
+set(handles.armButton,'String','Armed!')            
             
 
 
