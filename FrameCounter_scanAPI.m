@@ -1,6 +1,7 @@
 function FrameCounter_scanAPI(src,evnt,frameInterval)
 
 global hStim hStimPock frameNum stimNum stimFlag sig
+
 switch evnt.EventName
         
     case 'acquisitionStart'
@@ -18,10 +19,10 @@ switch evnt.EventName
         cfgSampClkTiming(hStim, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
         cfgDigEdgeStartTrig(hStim, 'PFI0'),
 
-        hStimPock = dabs.ni.daqmx.Task('Stim Pockels');
-        createAOVoltageChan(hStimPock,'si4-2',1,{'Stim Pockels'},-5,5);
-        cfgSampClkTiming(hStimPock, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
-        cfgDigEdgeStartTrig(hStimPock, 'PFI0'),
+         hStimPock = dabs.ni.daqmx.Task('Stim Pockels');
+         createAOVoltageChan(hStimPock,'si4-2',1,{'Stim Pockels'},-5,5);
+         cfgSampClkTiming(hStimPock, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
+         cfgDigEdgeStartTrig(hStimPock, 'PFI0'),
         
         assignin('base','hStimBase',hStim);
         assignin('base','hStimPockBase',hStimPock);
@@ -29,29 +30,29 @@ switch evnt.EventName
          frameNum = frameNum+1;                    
          if mod(frameNum,frameInterval) == frameInterval - 1
             start(hStim),
-            start(hStimPock),
+             start(hStimPock),
             stimFlag = 1;
             stimNum = stimNum + 1;            
          elseif stimFlag == 1 && isTaskDone(hStim) && isTaskDone(hStimPock)
             stimFlag = 0;
             stop(hStim),
-            stop(hStimPock),
+             stop(hStimPock),
             writeAnalogData(hStim, sig(:,1:2), 60,false),
-            writeAnalogData(hStimPock, sig(:,3), 60,false),
+             writeAnalogData(hStimPock, sig(:,3), 60,false),
             control(hStim,'DAQmx_Val_Task_Commit'),
-            control(hStimPock,'DAQmx_Val_Task_Commit'),            
+             control(hStimPock,'DAQmx_Val_Task_Commit'),            
          end
 
     case {'acquisitionDone' 'acquisitionAborted'}
         stimFlag = 0;
         waitUntilTaskDone(hStim,1),
-        waitUntilTaskDone(hStimPock,1),
+         waitUntilTaskDone(hStimPock,1),
         if isvalid(hStim)
             clear(hStim),
         end
-        if isvalid(hStimPock)
-            clear(hStimPock),
-        end
+         if isvalid(hStimPock)
+             clear(hStimPock),
+         end
 end
 
         

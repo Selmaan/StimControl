@@ -52,7 +52,8 @@ function StimGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to StimGUI (see VARARGIN)
 
-global imZoom stimDur stimPow stimRot stimOsc imData imMeta imRef stimROI hStimShutter hStimMirrorPrep
+global stimData hStimMirrorPrep
+% imZoom stimDur stimPow stimRot stimOsc
 
 % Choose default command line output for StimGUI
 handles.output = hObject;
@@ -61,30 +62,27 @@ handles.output = hObject;
 guidata(hObject, handles);
 
 [refFile,refPath] = uigetfile('.tif');
-[imData,imMeta] = tiffRead([refPath refFile]);
-imLim = prctile(imData(:),[1 99]);
-imRef = (imData-imLim(1))/(imLim(2)-imLim(1));
+[stimData.imData,stimData.imMeta] = tiffRead([refPath refFile]);
+imLim = prctile(stimData.imData(:),[1 99]);
+stimData.imRef = (stimData.imData-imLim(1))/(imLim(2)-imLim(1));
 axes(handles.axes1),
-imshow(imRef),
+imshow(stimData.imRef),
 
-imZoom = imMeta.acq.zoomFactor;
-stimDur = 30;
-stimPow = 2;
-stimRot = 1e3;
-stimOsc = stimRot / (6-1/3);
-stimROI = imellipse(gca, [0 0 0 0]);
+stimData.imZoom = stimData.imMeta.acq.zoomFactor;
+stimData.stimDur = 30;
+stimData.stimPow = 2;
+stimData.stimRot = 1e3;
+stimData.stimOsc = stimData.stimRot / (6-1/3);
+stimData.stimROI = imellipse(gca, [0 0 0 0]);
 
-%create session to control shutter
-hStimShutter = daq.createSession('ni');
-addDigitalChannel(hStimShutter,'ExtGalvo','Port0/Line1','OutputOnly');
 %create session to preposition mirror
 hStimMirrorPrep = daq.createSession('ni');
 hMirrors = addAnalogOutputChannel(hStimMirrorPrep,'ExtGalvo',[0 1],'Voltage');
 hMirrors(1).Range=[-5 5];
 hMirrors(2).Range=[-5 5];
-sHz = 1e5;
-sig = zeros(stimDur*1e-3*sHz,3);
-createStimTasks(sig,sHz);
+stimData.sHz = 1e5;
+sig = zeros(stimData.stimDur*1e-3*stimData.sHz,3);
+createStimTasks(sig,stimData.sHz);
 deleteStimTasks;
 
 % UIWAIT makes StimGUI wait for user response (see UIRESUME)
@@ -115,22 +113,12 @@ function newROIbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to newROIbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global stimROI
+global stimData
 
-delete(stimROI),
+delete(stimData.stimROI),
 
 axes(handles.axes1),
-stimROI = imellipse;
-
-
-% --- Executes on button press in FrameTriggercheckbox.
-function FrameTriggercheckbox_Callback(hObject, eventdata, handles)
-% hObject    handle to FrameTriggercheckbox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of FrameTriggercheckbox
-
+stimData.stimROI = imellipse;
 
 % --- Executes on button press in Stimpushbutton.
 function Stimpushbutton_Callback(hObject, eventdata, handles)
@@ -140,21 +128,20 @@ function Stimpushbutton_Callback(hObject, eventdata, handles)
 
 home,
 
-global hStim hStimPock frameNum stimFrames hStimMirrorPrep
+global stimData hStim hStimPock frameNum stimFrames hStimMirrorPrep
 
 if strcmp('Arm Stimulation',get(handles.armButton,'String'))
     deleteStimTasks,
 
-    sHz = 1e5;
     %create stim signals
-    [xSig,ySig,pockSig] = createStimSignals(sHz);
+    [stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals(stimData.sHz);
     %preposition mirrors
-    outputSingleScan(hStimMirrorPrep,[xSig(1),ySig(1)])
+    outputSingleScan(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)])
     %create stim tasks
-    createStimTasks([xSig,ySig,pockSig],sHz);
+    createStimTasks([stimData.xSig,stimData.ySig,stimData.pockSig],stimData.sHz);
     %initialize / arm/ prepare tasks
-    writeAnalogData(hStim, [xSig,ySig], 60,false),
-    writeAnalogData(hStimPock, pockSig, 60,false),
+    writeAnalogData(hStim, [stimData.xSig,stimData.ySig], 60,false),
+    writeAnalogData(hStimPock, stimData.pockSig, 60,false),
     control(hStim,'DAQmx_Val_Task_Commit'),
     control(hStimPock,'DAQmx_Val_Task_Commit'),
     pause(1e-3),
@@ -174,8 +161,9 @@ if frameNum ~= loadFrameNum
 end
 display('Stim!'),
 stimFrames(end+1) = loadFrameNum + 1;
-waitUntilTaskDone(hStim,1),
-waitUntilTaskDone(hStimPock,1),
+while ~isTaskDone(hStim) | ~isTaskDone(hStimPock)
+    drawnow,
+end
 stop(hStim),
 stop(hStimPock),
 clear(hStim),
@@ -192,14 +180,14 @@ function gainSlider_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-global imRef stimROI
+global stimData
 imGain = 10^(round(100*get(hObject,'Value'))/100);
 set(hObject,'Value',log10(imGain)),
 %set(handles.gainText,'String',sprintf('Gain: %1.2d',imGain)),
-roiPos = getPosition(stimROI);
+stimData.roiPos = getPosition(stimData.stimROI);
 axes(handles.axes1),
-imshow(imRef*imGain),
-stimROI = imellipse(gca,roiPos);
+imshow(stimData.imRef*imGain),
+stimData.stimROI = imellipse(gca,stimData.roiPos);
 
 % --- Executes during object creation, after setting all properties.
 function gainSlider_CreateFcn(hObject, eventdata, handles)
@@ -245,17 +233,16 @@ end
 % --- Function to create Stimulation Signal from current parameters/ROI --%
 function [xSig,ySig,pockSig] = createStimSignals(sHz)
 
-global imZoom stimDur stimPow stimRot stimOsc stimROI
-scanAmp = 20/(3*imZoom);
-
-roiRect = stimROI.getPosition;
+global stimData
+scanAmp = 20/(3*stimData.imZoom);
+roiRect = getPosition(stimData.stimROI);
 roiCentroid = [roiRect(1) + roiRect(3)/2, roiRect(2) + roiRect(4)/2];
 roiDiameter = (roiRect(3:4) - 1)*(scanAmp/511);
 roiOffset = (roiCentroid-1)*(scanAmp/511)-(scanAmp/2);
 
 [xSig, ySig] = genSpiralSigs(roiDiameter, roiOffset,...
-        stimDur*1e-3, stimRot, stimOsc, sHz);
-pockSig = [stimPow*ones(length(xSig)-1,1); zeros(1,1)];
+        stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz);
+pockSig = [stimData.stimPow*ones(length(xSig)-1,1); zeros(1,1)];
 
 % --- Executes on button press in armButton.
 function armButton_Callback(hObject, eventdata, handles)
@@ -263,19 +250,18 @@ function armButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global hStim hStimPock hStimMirrorPrep
+global stimData hStim hStimPock hStimMirrorPrep
 
 deleteStimTasks,
 
-sHz = 1e5;
 %create stim signals
-[xSig,ySig,pockSig] = createStimSignals(sHz);
-outputSingleScan(hStimMirrorPrep,[xSig(1),ySig(1)])
+[stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals(stimData.sHz);
+outputSingleScan(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)])
 %create stim tasks
-createStimTasks([xSig,ySig,pockSig],sHz);
+createStimTasks([stimData.xSig,stimData.ySig,stimData.pockSig],stimData.sHz);
 %Write task data
-writeAnalogData(hStim, [xSig,ySig], 60,false),
-writeAnalogData(hStimPock, pockSig, 60,false),
+writeAnalogData(hStim, [stimData.xSig,stimData.ySig], 60,false),
+writeAnalogData(hStimPock, stimData.pockSig, 60,false),
 %Commit Tasks
 control(hStim,'DAQmx_Val_Task_Commit'),
 control(hStimPock,'DAQmx_Val_Task_Commit'),
@@ -297,26 +283,19 @@ function saveButton_Callback(hObject, eventdata, handles)
 % hObject    handle to saveButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global stimFrames saveStimDir imZoom stimDur stimPow stimRot stimOsc imData imMeta stimROI
+global stimData stimFrames saveStimDir
 
 if isempty(saveStimDir)
     saveStimDir = uigetdir('C:\Data','Stim Data Directory');
 end
 
-data.stimFrames = stimFrames;
-data.EllipsePos = stimROI.getPosition;
-data.imZoom = imZoom;
-data.stimDur = stimDur;
-data.stimPow = stimPow;
-data.stimRot = stimRot;
-data.stimOsc = stimOsc;
-data.imData = imData;
-data.imMeta = imMeta;
+stimData.stimFrames = stimFrames;
+stimData.EllipsePos = getPosition(stimData.stimROI);
 
 stimFileName = input('Name this Stimulation Trial: ','s');
 saveFullFile = fullfile(saveStimDir,stimFileName);
 
-save(saveFullFile,'data')
+save(saveFullFile,'stimData')
 
 
 % --- Executes on button press in shutterToggleButton.
@@ -325,7 +304,9 @@ function shutterToggleButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global hStimShutter
+%create session to control shutter
+hStimShutter = daq.createSession('ni');
+addDigitalChannel(hStimShutter,'ExtGalvo','Port0/Line1','OutputOnly');
 
 if strcmp('Open Shutter',get(hObject,'String'))
     outputSingleScan(hStimShutter,1),

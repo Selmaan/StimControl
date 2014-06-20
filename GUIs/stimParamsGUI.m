@@ -58,13 +58,13 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
-global imZoom stimDur stimPow stimRot stimOsc
+global stimData
 %Set all parameters to the global values
-set(handles.zoomEdit,'String',imZoom)
-set(handles.durEdit,'String',stimDur)
-set(handles.powerEdit,'String',stimPow)
-set(handles.rotEdit,'String',stimRot)
-set(handles.oscEdit,'String',stimOsc)
+set(handles.zoomEdit,'String',stimData.imZoom)
+set(handles.durEdit,'String',stimData.stimDur)
+set(handles.powerEdit,'String',stimData.stimPow)
+set(handles.rotEdit,'String',stimData.stimRot)
+set(handles.oscEdit,'String',stimData.stimOsc)
 
 % UIWAIT makes stimParamsGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -89,9 +89,9 @@ function zoomEdit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of zoomEdit as text
 %        str2double(get(hObject,'String')) returns contents of zoomEdit as a double
-global imZoom
+global stimData
 
-imZoom = str2double(get(hObject,'String'));
+stimData.imZoom = str2double(get(hObject,'String'));
 
 % --- Executes during object creation, after setting all properties.
 function zoomEdit_CreateFcn(hObject, eventdata, handles)
@@ -114,9 +114,9 @@ function durEdit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of durEdit as text
 %        str2double(get(hObject,'String')) returns contents of durEdit as a double
-global imZoom stimDur stimPow stimRot stimOsc
+global stimData
 
-stimDur = str2double(get(hObject,'String'));
+stimData.stimDur = str2double(get(hObject,'String'));
 
 
 % --- Executes during object creation, after setting all properties.
@@ -141,9 +141,9 @@ function powerEdit_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of powerEdit as text
 %        str2double(get(hObject,'String')) returns contents of powerEdit as a double
 
-global imZoom stimDur stimPow stimRot stimOsc
+global stimData
 
-stimPow = str2double(get(hObject,'String'));
+stimData.stimPow = str2double(get(hObject,'String'));
 
 % --- Executes during object creation, after setting all properties.
 function powerEdit_CreateFcn(hObject, eventdata, handles)
@@ -166,9 +166,9 @@ function rotEdit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of rotEdit as text
 %        str2double(get(hObject,'String')) returns contents of rotEdit as a double
-global imZoom stimDur stimPow stimRot stimOsc
+global stimData
 
-stimRot = str2double(get(hObject,'String'));
+stimData.stimRot = str2double(get(hObject,'String'));
 
 % --- Executes during object creation, after setting all properties.
 function rotEdit_CreateFcn(hObject, eventdata, handles)
@@ -191,9 +191,9 @@ function oscEdit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of oscEdit as text
 %        str2double(get(hObject,'String')) returns contents of oscEdit as a double
-global imZoom stimDur stimPow stimRot stimOsc
+global stimData
 
-stimOsc = str2double(get(hObject,'String'));
+stimData.stimOsc = str2double(get(hObject,'String'));
 
 % --- Executes during object creation, after setting all properties.
 function oscEdit_CreateFcn(hObject, eventdata, handles)
@@ -214,11 +214,11 @@ function ApplyChangespushbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global imZoom stimDur stimPow stimRot stimOsc
+global stimData
 %Set all parameters to the global values
-set(handles.zoomEdit,'String',imZoom)
-set(handles.durEdit,'String',stimDur)
-set(handles.powerEdit,'String',stimPow)
-set(handles.rotEdit,'String',stimRot)
-set(handles.oscEdit,'String',stimOsc)
+stimData.imZoom = str2double(get(handles.zoomEdit,'String'));
+stimData.stimDur = str2double(get(handles.durEdit,'String'));
+stimData.stimPow = str2double(get(handles.powerEdit,'String'));
+stimData.stimRot = str2double(get(handles.rotEdit,'String'));
+stimData.stimOsc = str2double(get(handles.oscEdit,'String'));
 close(handles.figure1)
