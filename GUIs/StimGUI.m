@@ -52,7 +52,7 @@ function StimGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to StimGUI (see VARARGIN)
 
-global stimData hStimMirrorPrep
+global stimData
 % imZoom stimDur stimPow stimRot stimOsc
 
 % Choose default command line output for StimGUI
@@ -75,11 +75,6 @@ stimData.stimRot = 1e3;
 stimData.stimOsc = stimData.stimRot / (6-1/3);
 stimData.stimROI = imellipse(gca, [0 0 0 0]);
 
-%create session to preposition mirror
-hStimMirrorPrep = daq.createSession('ni');
-hMirrors = addAnalogOutputChannel(hStimMirrorPrep,'ExtGalvo',[0 1],'Voltage');
-hMirrors(1).Range=[-5 5];
-hMirrors(2).Range=[-5 5];
 stimData.sHz = 1e5;
 sig = zeros(stimData.stimDur*1e-3*stimData.sHz,3);
 createStimTasks(sig,stimData.sHz);
@@ -128,15 +123,19 @@ function Stimpushbutton_Callback(hObject, eventdata, handles)
 
 home,
 
-global stimData hStim hStimPock frameNum stimFrames hStimMirrorPrep
+global stimData hStim hStimPock frameNum stimFrames
 
 if strcmp('Arm Stimulation',get(handles.armButton,'String'))
     deleteStimTasks,
 
     %create stim signals
     [stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals(stimData.sHz);
-    %preposition mirrors
-    outputSingleScan(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)])
+    %Build Mirror pre-position session (TODO: eliminate this?) and pre-position mirrors 
+    hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
+    createAOVoltageChan(hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
+    writeAnalogData(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)]),
+    stop(hStimMirrorPrep),
+    clear(hStimMirrorPrep),
     %create stim tasks
     createStimTasks([stimData.xSig,stimData.ySig,stimData.pockSig],stimData.sHz);
     %initialize / arm/ prepare tasks
@@ -250,13 +249,18 @@ function armButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global stimData hStim hStimPock hStimMirrorPrep
+global stimData hStim hStimPock
 
 deleteStimTasks,
 
 %create stim signals
 [stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals(stimData.sHz);
-outputSingleScan(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)])
+%Build Mirror preposition session (TODO: eliminate this?) and prepare mirrors
+hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
+createAOVoltageChan(hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
+writeAnalogData(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)]),
+stop(hStimMirrorPrep),
+clear(hStimMirrorPrep),
 %create stim tasks
 createStimTasks([stimData.xSig,stimData.ySig,stimData.pockSig],stimData.sHz);
 %Write task data
@@ -276,7 +280,7 @@ function deleteTaskButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 deleteStimTasks
-
+set(handles.armButton,'String','Arm Stimulation'),
 
 % --- Executes on button press in saveButton.
 function saveButton_Callback(hObject, eventdata, handles)
@@ -304,16 +308,18 @@ function shutterToggleButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%create session to control shutter
-hStimShutter = daq.createSession('ni');
-addDigitalChannel(hStimShutter,'ExtGalvo','Port0/Line1','OutputOnly');
+hStimShutter = dabs.ni.daqmx.Task('Stim Shutter Toggle');
+createDOChan(hStimShutter,'ExtGalvo','port0/line1');
 
 if strcmp('Open Shutter',get(hObject,'String'))
-    outputSingleScan(hStimShutter,1),
+    writeDigitalData(hStimShutter, 1),
     set(hObject,'String','Close Shutter'),
     set(handles.Stimpushbutton,'BackgroundColor',[0 1 0])
 elseif strcmp('Close Shutter',get(hObject,'String'))
-    outputSingleScan(hStimShutter,0),
+    writeDigitalData(hStimShutter, 0),
     set(hObject,'String','Open Shutter'),
     set(handles.Stimpushbutton,'BackgroundColor',[1 0 0])
 end
+
+stop(hStimShutter),
+clear(hStimShutter),
