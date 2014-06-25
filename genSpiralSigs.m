@@ -4,7 +4,7 @@ function [xSig,ySig] = genSpiralSigs(axesDiameter, offset, dur, beamSpeed, shrin
 %beamSpeed, shrinkSpeed and sRate in Hz, dur in Sec
 
 if isempty(shrinkSpeed)
-    shrinkSpeed = beamSpeed / (6-1/3);
+    shrinkSpeed = beamSpeed / (2*pi);
 end
 
 t = 1/sRate:1/sRate:dur;

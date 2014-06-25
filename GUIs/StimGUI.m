@@ -70,9 +70,9 @@ imshow(stimData.imRef),
 
 stimData.imZoom = stimData.imMeta.acq.zoomFactor;
 stimData.stimDur = 30;
-stimData.stimPow = 2;
-stimData.stimRot = 1e3;
-stimData.stimOsc = stimData.stimRot / (6-1/3);
+stimData.stimPow = 1.5;
+stimData.stimRot = 1.5e3;
+stimData.stimOsc = stimData.stimRot / (2*pi);
 stimData.stimROI = imellipse(gca, [0 0 0 0]);
 
 stimData.sHz = 1e5;
