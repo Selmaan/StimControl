@@ -1,10 +1,14 @@
-function [xSig,ySig] = genSpiralSigs(axesDiameter, offset, dur, beamSpeed, shrinkSpeed, sRate)
+function [xSig,ySig] = genSpiralSigs(axesDiameter, offset, dur, beamSpeed, shrinkSpeed, sRate, rateCompensation)
 
 %diameter scalar, offset [x y], both in volts
 %beamSpeed, shrinkSpeed and sRate in Hz, dur in Sec
+%Rate 
+if ~exist('rateCompensation') || isempty(rateCompensation)
+    rateCompensation = false;
+end
 
 if isempty(shrinkSpeed)
-    shrinkSpeed = beamSpeed / (2*pi);
+    shrinkSpeed = beamSpeed / (2*pi-2/3);
 end
 
 t = 1/sRate:1/sRate:dur;
@@ -12,8 +16,20 @@ tFreq = t * (2*pi*beamSpeed);
 tAmp = t * (2*pi*shrinkSpeed);
 
 amp = sqrt((1-sawtooth(tAmp,1/2))/2);
-xSig=cos(tFreq).*(amp*axesDiameter(1)/2) + offset(1);
-ySig=sin(tFreq).*(amp*axesDiameter(2)/2) + offset(2);
+xSig=cos(tFreq).*(amp*axesDiameter(1)/2);
+ySig=sin(tFreq).*(amp*axesDiameter(2)/2);
 
+if rateCompensation
+    %build lookup table for amplitude conversion
+    beamSpeeds = [100,200,300,400,500,600,700,800,900,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000,4250,4500,4750,5000,5250,5500,5750,6000];
+    xFraction = [0.969174588375566;0.970648369899383;0.965214048157135;0.963410118137245;0.962217652963460;0.960253023354638;0.957750455034558;0.954517229046706;0.951210422705882;0.948861140780521;0.941026993123182;0.933005032948385;0.922403203391599;0.910514262518556;0.895306835607763;0.879902612962294;0.860773806744692;0.841066982646284;0.819065816334948;0.795862018529538;0.773946724092665;0.750443601941443;0.727770383935040;0.705672508527512;0.685661682241846;0.665183144141138;0.645505860956388;0.627166643345268;0.609394388237237;0.593767667987333];
+    yFraction = [0.969251232934621;0.967807557184022;0.966262445871354;0.964057116465654;0.961567674801468;0.961346119326759;0.958810286441312;0.957904545241052;0.956444788991417;0.953564522067255;0.951019400560219;0.943352908539234;0.937902777026661;0.933669074165175;0.924829134324000;0.913802198489790;0.905367378121501;0.892021747484029;0.875851728836463;0.859618980393084;0.842455903679355;0.823924105391477;0.805269190094451;0.785234463665851;0.766367024094675;0.745222635387463;0.725628617885513;0.703562481258030;0.681251154179532;0.659927418174761];
+    XYdivisor = interp1(beamSpeeds,[xFraction, yFraction], beamSpeed, 'linear', 'extrap');
+    xSig = xSig/XYdivisor(1);
+    ySig = ySig/XYdivisor(2);
+end
+        
+xSig = xSig + offset(1);
+ySig = ySig + offset(2);
 xSig = reshape(xSig,length(xSig),1);
 ySig = reshape(ySig,length(ySig),1);

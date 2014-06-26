@@ -71,9 +71,10 @@ imshow(stimData.imRef),
 stimData.imZoom = stimData.imMeta.acq.zoomFactor;
 stimData.stimDur = 30;
 stimData.stimPow = 1.5;
-stimData.stimRot = 1.5e3;
-stimData.stimOsc = stimData.stimRot / (2*pi);
+stimData.stimRot = 3e3;
+stimData.stimOsc = stimData.stimRot / (2*pi-2/3);
 stimData.stimROI = imellipse(gca, [0 0 0 0]);
+stimData.ampCompensation = true;
 
 stimData.sHz = 1e5;
 sig = zeros(stimData.stimDur*1e-3*stimData.sHz,3);
@@ -240,7 +241,7 @@ roiDiameter = (roiRect(3:4) - 1)*(scanAmp/511);
 roiOffset = (roiCentroid-1)*(scanAmp/511)-(scanAmp/2);
 
 [xSig, ySig] = genSpiralSigs(roiDiameter, roiOffset,...
-        stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz);
+        stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz, stimData.ampCompensation);
 pockSig = [stimData.stimPow*ones(length(xSig)-1,1); zeros(1,1)];
 
 % --- Executes on button press in armButton.
