@@ -134,7 +134,7 @@ if strcmp('Arm Stimulation',get(handles.armButton,'String'))
     %Build Mirror pre-position session (TODO: eliminate this?) and pre-position mirrors 
     hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
     createAOVoltageChan(hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
-    writeAnalogData(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)]),
+    writeAnalogData(hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)]),
     stop(hStimMirrorPrep),
     clear(hStimMirrorPrep),
     %create stim tasks
@@ -144,7 +144,7 @@ if strcmp('Arm Stimulation',get(handles.armButton,'String'))
     writeAnalogData(hStimPock, stimData.pockSig, 60,false),
     control(hStim,'DAQmx_Val_Task_Commit'),
     control(hStimPock,'DAQmx_Val_Task_Commit'),
-    pause(1e-3),
+    drawnow,
 elseif strcmp('Armed!',get(handles.armButton,'String'))
     set(handles.armButton,'String','Arm Stimulation')
 end
@@ -259,7 +259,7 @@ deleteStimTasks,
 %Build Mirror preposition session (TODO: eliminate this?) and prepare mirrors
 hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
 createAOVoltageChan(hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
-writeAnalogData(hStimMirrorPrep,[stimData.xSig(1),stimData.ySig(1)]),
+writeAnalogData(hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)]),
 stop(hStimMirrorPrep),
 clear(hStimMirrorPrep),
 %create stim tasks
