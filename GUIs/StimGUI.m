@@ -22,7 +22,7 @@ function varargout = StimGUI(varargin)
 
 % Edit the above text to modify the response to help StimGUI
 
-% Last Modified by GUIDE v2.5 18-Jun-2014 19:18:52
+% Last Modified by GUIDE v2.5 01-Jul-2014 12:11:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,7 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-
+end
 
 % --- Executes just before StimGUI is made visible.
 function StimGUI_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -73,16 +73,18 @@ stimData.stimDur = 30;
 stimData.stimPow = 1.5;
 stimData.stimRot = 3e3;
 stimData.stimOsc = stimData.stimRot / (2*pi-2/3);
+stimData.piezoPos = 0;
+
 stimData.stimROI = imellipse(gca, [0 0 0 0]);
 stimData.ampCompensation = true;
 
 stimData.sHz = 1e5;
 sig = zeros(stimData.stimDur*1e-3*stimData.sHz,3);
 createStimTasks(sig,stimData.sHz);
-deleteStimTasks;
 
 % UIWAIT makes StimGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
+end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -94,6 +96,7 @@ function varargout = StimGUI_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+end
 
 
 % --- Executes on button press in StimParamsbutton.
@@ -103,6 +106,7 @@ function StimParamsbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 stimParamsGUI,
+end
 
 % --- Executes on button press in newROIbutton.
 function newROIbutton_Callback(hObject, eventdata, handles)
@@ -115,6 +119,7 @@ delete(stimData.stimROI),
 
 axes(handles.axes1),
 stimData.stimROI = imellipse;
+end
 
 % --- Executes on button press in Stimpushbutton.
 function Stimpushbutton_Callback(hObject, eventdata, handles)
@@ -124,26 +129,23 @@ function Stimpushbutton_Callback(hObject, eventdata, handles)
 
 home,
 
-global stimData hStim hStimPock frameNum stimFrames
+global stimData stimTasks frameNum stimFrames
 
 if strcmp('Arm Stimulation',get(handles.armButton,'String'))
-    deleteStimTasks,
-
     %create stim signals
-    [stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals(stimData.sHz);
-    %Build Mirror pre-position session (TODO: eliminate this?) and pre-position mirrors 
-    hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
-    createAOVoltageChan(hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
-    writeAnalogData(hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)]),
-    stop(hStimMirrorPrep),
-    clear(hStimMirrorPrep),
-    %create stim tasks
-    createStimTasks([stimData.xSig,stimData.ySig,stimData.pockSig],stimData.sHz);
+    [stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals;
+    %Prepare mirrors at centroid and adjust piezo
+    writeAnalogData(stimTasks.hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)], 10, true),
+    stop(stimTasks.hStimMirrorPrep),
+    writeAnalogData(stimTasks.hStimPiezo,stimData.piezoPos/40, 10, true),
+    stop(stimTasks.hStimMirrorPrep),
     %initialize / arm/ prepare tasks
-    writeAnalogData(hStim, [stimData.xSig,stimData.ySig], 60,false),
-    writeAnalogData(hStimPock, stimData.pockSig, 60,false),
-    control(hStim,'DAQmx_Val_Task_Commit'),
-    control(hStimPock,'DAQmx_Val_Task_Commit'),
+    cfgSampClkTiming(stimTasks.hStim, stimData.sHz, 'DAQmx_Val_FiniteSamps', size(stimData.xSig,1)),
+    cfgSampClkTiming(stimTasks.hStimPock, stimData.sHz, 'DAQmx_Val_FiniteSamps', size(stimData.xSig,1)),
+    writeAnalogData(stimTasks.hStim, [stimData.xSig,stimData.ySig], 10,false),
+    writeAnalogData(stimTasks.hStimPock, stimData.pockSig, 10,false),
+    control(stimTasks.hStim,'DAQmx_Val_Task_Commit'),
+    control(stimTasks.hStimPock,'DAQmx_Val_Task_Commit'),
     drawnow,
 elseif strcmp('Armed!',get(handles.armButton,'String'))
     set(handles.armButton,'String','Arm Stimulation')
@@ -151,24 +153,25 @@ end
 
 %Loop to be sure tasks are started before beginning of next frame
 loadFrameNum = frameNum;
-start(hStim),
-start(hStimPock),
+start(stimTasks.hStim),
+start(stimTasks.hStimPock),
 if frameNum ~= loadFrameNum
-    abort(hStim),
-    abort(hStimPock),
+    abort(stimTasks.hStim),
+    abort(stimTasks.hStimPock),
     display('Aborted because of Asynchronous Timing'),
     return
 end
 display('Stim!'),
 stimFrames(end+1) = loadFrameNum + 1;
-while ~isTaskDone(hStim) | ~isTaskDone(hStimPock)
+while ~isTaskDone(stimTasks.hStim) | ~isTaskDone(stimTasks.hStimPock)
     drawnow,
 end
-stop(hStim),
-stop(hStimPock),
-clear(hStim),
-clear(hStimPock),
+stop(stimTasks.hStim),
+stop(stimTasks.hStimPock),
+control(stimTasks.hStim,'DAQmx_Val_Task_Unreserve'),
+control(stimTasks.hStimPock,'DAQmx_Val_Task_Unreserve'),
 display('Ready...'),
+end
 
 
 
@@ -188,6 +191,7 @@ stimData.roiPos = getPosition(stimData.stimROI);
 axes(handles.axes1),
 imshow(stimData.imRef*imGain),
 stimData.stimROI = imellipse(gca,stimData.roiPos);
+end
 
 % --- Executes during object creation, after setting all properties.
 function gainSlider_CreateFcn(hObject, eventdata, handles)
@@ -200,38 +204,61 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 set(hObject,'Value',0),
+end
 
 % --- Function to create Stim Tasks --- %
 function createStimTasks(sig,sHz)
 
-global hStim hStimPock
+global stimTasks
 
-hStim = dabs.ni.daqmx.Task('X Y Stim');
-createAOVoltageChan(hStim,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
-cfgSampClkTiming(hStim, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
-cfgDigEdgeStartTrig(hStim, 'PFI0'),
+if ~isempty(stimTasks)
+    deleteStimTasks
+end
 
-hStimPock = dabs.ni.daqmx.Task('Stim Pockels');
-createAOVoltageChan(hStimPock,'si4-2',1,{'Stim Pockels'},-5,5);
-cfgSampClkTiming(hStimPock, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
-cfgDigEdgeStartTrig(hStimPock, 'PFI0'),
+stimTasks.dummy1 = dabs.ni.daqmx.Task('dummyTask1');
+
+stimTasks.hStim = dabs.ni.daqmx.Task('X Y Stim');
+createAOVoltageChan(stimTasks.hStim,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
+cfgSampClkTiming(stimTasks.hStim, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
+cfgOutputBuffer(stimTasks.hStim, sHz),
+cfgDigEdgeStartTrig(stimTasks.hStim, 'PFI0'),
+
+stimTasks.hStimPock = dabs.ni.daqmx.Task('Stim Pockels');
+createAOVoltageChan(stimTasks.hStimPock,'si4-2',1,{'Stim Pockels'},-5,5);
+cfgSampClkTiming(stimTasks.hStimPock, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
+cfgOutputBuffer(stimTasks.hStimPock, sHz),
+cfgDigEdgeStartTrig(stimTasks.hStimPock, 'PFI0'),
+
+stimTasks.hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
+createAOVoltageChan(stimTasks.hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
+
+stimTasks.hStimShutter = dabs.ni.daqmx.Task('Stim Shutter Toggle');
+createDOChan(stimTasks.hStimShutter,'ExtGalvo','port0/line1');
+
+stimTasks.hStimPiezo = dabs.ni.daqmx.Task('Stim Piezo Position');
+createAOVoltageChan(stimTasks.hStimPiezo,'si4-2',0,{'Stim Piezo'},-5,5);
+
+stimTasks.dummy2 = dabs.ni.daqmx.Task('dummyTask2');
+
+end
 
 % --- function to delete stim tasks --- %
 function deleteStimTasks
 
-global hStim hStimPock
+global stimTasks
 
-if isvalid(hStim)
-    abort(hStim),
-    clear(hStim),
-end
-if isvalid(hStimPock)
-    abort(hStimPock),
-    clear(hStimPock),
+daqmxTaskSafeClear(stimTasks.dummy1)
+daqmxTaskSafeClear(stimTasks.hStim)
+daqmxTaskSafeClear(stimTasks.hStimPock)
+daqmxTaskSafeClear(stimTasks.hStimMirrorPrep)
+daqmxTaskSafeClear(stimTasks.hStimShutter)
+daqmxTaskSafeClear(stimTasks.hStimPiezo)
+daqmxTaskSafeClear(stimTasks.dummy2)
+
 end
 
 % --- Function to create Stimulation Signal from current parameters/ROI --%
-function [xSig,ySig,pockSig] = createStimSignals(sHz)
+function [xSig,ySig,pockSig] = createStimSignals
 
 global stimData
 scanAmp = 20/(3*stimData.imZoom);
@@ -243,6 +270,7 @@ roiOffset = (roiCentroid-1)*(scanAmp/511)-(scanAmp/2);
 [xSig, ySig] = genSpiralSigs(roiDiameter, roiOffset,...
         stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz, stimData.ampCompensation);
 pockSig = [stimData.stimPow*ones(length(xSig)-1,1); zeros(1,1)];
+end
 
 % --- Executes on button press in armButton.
 function armButton_Callback(hObject, eventdata, handles)
@@ -250,38 +278,39 @@ function armButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global stimData hStim hStimPock
-
-deleteStimTasks,
+global stimData stimTasks
 
 %create stim signals
-[stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals(stimData.sHz);
-%Build Mirror preposition session (TODO: eliminate this?) and prepare mirrors
-hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
-createAOVoltageChan(hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
-writeAnalogData(hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)]),
-stop(hStimMirrorPrep),
-clear(hStimMirrorPrep),
-%create stim tasks
-createStimTasks([stimData.xSig,stimData.ySig,stimData.pockSig],stimData.sHz);
+[stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals;
+%Prepare Mirrors at centroid and adjust piezo position
+writeAnalogData(stimTasks.hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)], 10, true),
+stop(stimTasks.hStimMirrorPrep),
+writeAnalogData(stimTasks.hStimPiezo,stimData.piezoPos/40, 10, true),
+stop(stimTasks.hStimMirrorPrep),
 %Write task data
-writeAnalogData(hStim, [stimData.xSig,stimData.ySig], 60,false),
-writeAnalogData(hStimPock, stimData.pockSig, 60,false),
+cfgSampClkTiming(stimTasks.hStim, stimData.sHz, 'DAQmx_Val_FiniteSamps', size(stimData.xSig,1)),
+cfgSampClkTiming(stimTasks.hStimPock, stimData.sHz, 'DAQmx_Val_FiniteSamps', size(stimData.xSig,1)),
+writeAnalogData(stimTasks.hStim, [stimData.xSig,stimData.ySig], 10,false),
+writeAnalogData(stimTasks.hStimPock, stimData.pockSig, 10,false),
 %Commit Tasks
-control(hStim,'DAQmx_Val_Task_Commit'),
-control(hStimPock,'DAQmx_Val_Task_Commit'),
+control(stimTasks.hStim,'DAQmx_Val_Task_Commit'),
+control(stimTasks.hStimPock,'DAQmx_Val_Task_Commit'),
 set(handles.armButton,'String','Armed!')            
-            
+end            
 
 
-% --- Executes on button press in deleteTaskButton.
-function deleteTaskButton_Callback(hObject, eventdata, handles)
-% hObject    handle to deleteTaskButton (see GCBO)
+% --- Executes on button press in resetTaskButton.
+function resetTaskButton_Callback(hObject, eventdata, handles)
+% hObject    handle to resetTaskButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-deleteStimTasks
+global stimData
+
+sig = zeros(stimData.stimDur*1e-3*stimData.sHz,3);
+createStimTasks(sig,stimData.sHz);
 set(handles.armButton,'String','Arm Stimulation'),
+end
 
 % --- Executes on button press in saveButton.
 function saveButton_Callback(hObject, eventdata, handles)
@@ -301,7 +330,7 @@ stimFileName = input('Name this Stimulation Trial: ','s');
 saveFullFile = fullfile(saveStimDir,stimFileName);
 
 save(saveFullFile,'stimData')
-
+end
 
 % --- Executes on button press in shutterToggleButton.
 function shutterToggleButton_Callback(hObject, eventdata, handles)
@@ -309,18 +338,26 @@ function shutterToggleButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-hStimShutter = dabs.ni.daqmx.Task('Stim Shutter Toggle');
-createDOChan(hStimShutter,'ExtGalvo','port0/line1');
+global stimTasks
 
 if strcmp('Open Shutter',get(hObject,'String'))
-    writeDigitalData(hStimShutter, 1),
+    writeDigitalData(stimTasks.hStimShutter, 1, 10, true),
     set(hObject,'String','Close Shutter'),
     set(handles.Stimpushbutton,'BackgroundColor',[0 1 0])
 elseif strcmp('Close Shutter',get(hObject,'String'))
-    writeDigitalData(hStimShutter, 0),
+    writeDigitalData(stimTasks.hStimShutter, 0, 10, true),
     set(hObject,'String','Open Shutter'),
     set(handles.Stimpushbutton,'BackgroundColor',[1 0 0])
 end
 
-stop(hStimShutter),
-clear(hStimShutter),
+stop(stimTasks.hStimShutter),
+end
+
+% Clears task if present, otherwise avoids error
+function daqmxTaskSafeClear(task)
+    try
+        clkRate = task.sampClkRate; % if this call fails, the task does not exist anymore
+        task.clear();
+    catch ME
+    end
+end

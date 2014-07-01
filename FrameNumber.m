@@ -8,7 +8,7 @@ switch evnt.EventName
         stimFrames = [];
     case 'frameAcquired'
          frameNum = frameNum+1;
-    case 'acquisitionDone'
+    case {'acquisitionDone' 'focusDone'}
         if ~isempty(stimFrames)
             global stimData stimFrames saveStimDir
 
@@ -20,8 +20,9 @@ switch evnt.EventName
             stimData.EllipsePos = getPosition(stimData.stimROI);
 
             stimFileName = input('Name this Stimulation Trial: ','s');
+            if ~isempty(stimFileName)
             saveFullFile = fullfile(saveStimDir,stimFileName);
-
             save(saveFullFile,'stimData')
+            end
         end
 end

@@ -22,7 +22,7 @@ function varargout = stimParamsGUI(varargin)
 
 % Edit the above text to modify the response to help stimParamsGUI
 
-% Last Modified by GUIDE v2.5 17-Jun-2014 14:01:55
+% Last Modified by GUIDE v2.5 01-Jul-2014 12:21:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -65,7 +65,7 @@ set(handles.durEdit,'String',stimData.stimDur)
 set(handles.powerEdit,'String',stimData.stimPow)
 set(handles.rotEdit,'String',stimData.stimRot)
 set(handles.oscEdit,'String',stimData.stimOsc)
-
+set(handles.piezoEdit,'String',stimData.piezoPos)
 % UIWAIT makes stimParamsGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -221,4 +221,30 @@ stimData.stimDur = str2double(get(handles.durEdit,'String'));
 stimData.stimPow = str2double(get(handles.powerEdit,'String'));
 stimData.stimRot = str2double(get(handles.rotEdit,'String'));
 stimData.stimOsc = str2double(get(handles.oscEdit,'String'));
+stimData.piezoPos = str2double(get(handles.piezoEdit,'String'));
 close(handles.figure1)
+
+
+
+function piezoEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to piezoEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of piezoEdit as text
+%        str2double(get(hObject,'String')) returns contents of piezoEdit as a double
+global stimData
+
+stimData.piezoPos = str2double(get(hObject,'String'));
+
+% --- Executes during object creation, after setting all properties.
+function piezoEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to piezoEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
