@@ -1,28 +1,21 @@
 function FrameNumber(src,evnt)
 
-global frameNum stimFrames
+global frameNum
 switch evnt.EventName
     
     case {'acquisitionStart' 'focusStart'}
+        global stimData stimFrames
         frameNum = 1;
         stimFrames = [];
+        stimData.stimFullFile = [evalin('base','hSI.loggingFullFileName(1:end-3)') 'mat'];
     case 'frameAcquired'
          frameNum = frameNum+1;
     case {'acquisitionDone' 'focusDone'}
+        global stimData stimFrames
         if ~isempty(stimFrames)
-            global stimData stimFrames
-
-            if ~isfield(stimData,'saveStimDir') || length(stimData.saveStimDir) == 1
-                display('Saving not Formatted'),
-                return
-            end
-
             stimData.stimFrames = stimFrames;
             stimData.EllipsePos = getPosition(stimData.stimROI);
-            stimData.stimFile = sprintf('%s_%03.0f',stimData.FileBaseName,stimData.acqFileNumber);
-            stimData.stimFullFile = fullfile(stimData.saveStimDir,stimData.stimFile);
-            display(sprintf(' Saving as: %s \n in: %s',stimData.stimFile,stimData.saveStimDir)),
+            display(stimData.stimFullFile),
             save(stimData.stimFullFile,'stimData')            
-            stimData.acqFileNumber = stimData.acqFileNumber + 1;
         end
 end
