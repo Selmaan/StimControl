@@ -317,19 +317,15 @@ function saveButton_Callback(hObject, eventdata, handles)
 % hObject    handle to saveButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global stimData stimFrames saveStimDir
+global stimData
 
-if isempty(saveStimDir)
-    saveStimDir = uigetdir('C:\Data','Stim Data Directory');
-end
+stimData.saveStimDir = uigetdir('C:\Data','Stim Data Directory');
+stimData.FileBaseName = input('Name this FOV and ROI: ','s');
+stimData.acqFileNumber = input('Provide Starting Acquisition Number: ');
+stimData.stimFile = sprintf('%s_%03.0f',stimData.FileBaseName,stimData.acqFileNumber);
+stimData.stimFullFile = fullfile(stimData.saveStimDir,stimData.stimFile);
+display(sprintf(' Saving as: %s \n in: %s',stimData.stimFile,stimData.saveStimDir)),
 
-stimData.stimFrames = stimFrames;
-stimData.EllipsePos = getPosition(stimData.stimROI);
-
-stimFileName = input('Name this Stimulation Trial: ','s');
-saveFullFile = fullfile(saveStimDir,stimFileName);
-
-save(saveFullFile,'stimData')
 end
 
 % --- Executes on button press in shutterToggleButton.

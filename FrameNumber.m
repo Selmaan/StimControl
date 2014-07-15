@@ -10,19 +10,19 @@ switch evnt.EventName
          frameNum = frameNum+1;
     case {'acquisitionDone' 'focusDone'}
         if ~isempty(stimFrames)
-            global stimData stimFrames saveStimDir
+            global stimData stimFrames
 
-            if isempty(saveStimDir)
-                saveStimDir = uigetdir('C:\Data','Stim Data Directory');
+            if ~isfield(stimData,'saveStimDir') || length(stimData.saveStimDir) == 1
+                display('Saving not Formatted'),
+                return
             end
 
             stimData.stimFrames = stimFrames;
             stimData.EllipsePos = getPosition(stimData.stimROI);
-
-            stimFileName = input('Name this Stimulation Trial: ','s');
-            if ~isempty(stimFileName)
-            saveFullFile = fullfile(saveStimDir,stimFileName);
-            save(saveFullFile,'stimData')
-            end
+            stimData.stimFile = sprintf('%s_%03.0f',stimData.FileBaseName,stimData.acqFileNumber);
+            stimData.stimFullFile = fullfile(stimData.saveStimDir,stimData.stimFile);
+            display(sprintf(' Saving as: %s \n in: %s',stimData.stimFile,stimData.saveStimDir)),
+            save(stimData.stimFullFile,'stimData')            
+            stimData.acqFileNumber = stimData.acqFileNumber + 1;
         end
 end
