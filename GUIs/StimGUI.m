@@ -71,12 +71,12 @@ imshow(stimData.imRef),
 stimData.imZoom = stimData.imMeta.acq.zoomFactor;
 stimData.stimDur = 30;
 stimData.stimPow = 1.5;
-stimData.stimRot = 3e3;
+stimData.stimRot = 1.5e3;
 stimData.stimOsc = stimData.stimRot / (2*pi-2/3);
 stimData.piezoPos = 0;
+stimData.ampCompensation = true;
 
 stimData.stimROI = imellipse(gca, [0 0 0 0]);
-stimData.ampCompensation = true;
 
 stimData.sHz = 1e5;
 sig = zeros(stimData.stimDur*1e-3*stimData.sHz,3);
