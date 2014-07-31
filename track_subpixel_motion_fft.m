@@ -38,7 +38,7 @@ function [xShift, yShift] = ...
 
 % Free parameter: usfac specifies by how much we upsample to refine the
 % sub-pixel estimate of the shift:
-usfac = 20;
+usfac = 10;
 
 % Pre-calculate some values:
 stack_fft = fft2(stack);
