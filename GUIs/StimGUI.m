@@ -153,6 +153,7 @@ elseif strcmp('Armed!',get(handles.armButton,'String'))
 end
 
 %Loop to be sure tasks are started before beginning of next frame
+drawnow,
 loadFrameNum = frameNum;
 start(stimTasks.hStim),
 start(stimTasks.hStimPock),
