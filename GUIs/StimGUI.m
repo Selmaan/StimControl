@@ -22,7 +22,7 @@ function varargout = StimGUI(varargin)
 
 % Edit the above text to modify the response to help StimGUI
 
-% Last Modified by GUIDE v2.5 01-Jul-2014 12:11:17
+% Last Modified by GUIDE v2.5 02-Oct-2014 11:48:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -61,8 +61,8 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
-[refFile,refPath] = uigetfile('.tif');
-[stimData.imData,stimData.imMeta] = tiffRead([refPath refFile]);
+[stimData.refFile,stimData.refPath] = uigetfile('.tif');
+[stimData.imData,stimData.imMeta] = tiffRead([stimData.refPath stimData.refFile]);
 imLim = prctile(stimData.imData(:),[1 99]);
 stimData.imRef = (stimData.imData-imLim(1))/(imLim(2)-imLim(1));
 axes(handles.axes1),
@@ -318,19 +318,21 @@ createStimTasks(sig,stimData.sHz);
 set(handles.armButton,'String','Arm Stimulation'),
 end
 
-% --- Executes on button press in saveButton.
-function saveButton_Callback(hObject, eventdata, handles)
-% hObject    handle to saveButton (see GCBO)
+% --- Executes on button press in newRefButton.
+function newRefButton_Callback(hObject, eventdata, handles)
+% hObject    handle to newRefButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global stimData
 
-stimData.saveStimDir = uigetdir('C:\Data','Stim Data Directory');
-stimData.FileBaseName = input('Name this FOV and ROI: ','s');
-stimData.acqFileNumber = input('Provide Starting Acquisition Number: ');
-stimData.stimFile = sprintf('%s_%03.0f',stimData.FileBaseName,stimData.acqFileNumber);
-stimData.stimFullFile = fullfile(stimData.saveStimDir,stimData.stimFile);
-display(sprintf(' Saving as: %s \n in: %s',stimData.stimFile,stimData.saveStimDir)),
+[stimData.refFile,stimData.refPath] = uigetfile([stimData.refPath '*.tif']);
+[stimData.imData,stimData.imMeta] = tiffRead([stimData.refPath stimData.refFile]);
+imLim = prctile(stimData.imData(:),[1 99]);
+stimData.imRef = (stimData.imData-imLim(1))/(imLim(2)-imLim(1));
+stimData.roiPos = getPosition(stimData.stimROI);
+axes(handles.axes1),
+imshow(stimData.imRef),
+stimData.stimROI = imellipse(gca,stimData.roiPos);
 
 end
 
