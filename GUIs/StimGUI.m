@@ -213,6 +213,8 @@ function createStimTasks(sig,sHz)
 
 global stimTasks
 
+stimBoardID = 'ExtGalvoUSB';
+
 if ~isempty(stimTasks)
     deleteStimTasks
 end
@@ -220,7 +222,7 @@ end
 stimTasks.dummy1 = dabs.ni.daqmx.Task('dummyTask1');
 
 stimTasks.hStim = dabs.ni.daqmx.Task('X Y Stim');
-createAOVoltageChan(stimTasks.hStim,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
+createAOVoltageChan(stimTasks.hStim,stimBoardID,0:1,{'X Mirror','Y Mirror'},-5,5);
 cfgSampClkTiming(stimTasks.hStim, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
 cfgOutputBuffer(stimTasks.hStim, sHz),
 cfgDigEdgeStartTrig(stimTasks.hStim, 'PFI0'),
@@ -232,10 +234,10 @@ cfgOutputBuffer(stimTasks.hStimPock, sHz),
 cfgDigEdgeStartTrig(stimTasks.hStimPock, 'PFI0'),
 
 stimTasks.hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');
-createAOVoltageChan(stimTasks.hStimMirrorPrep,'ExtGalvo',0:1,{'X Mirror','Y Mirror'},-5,5);
+createAOVoltageChan(stimTasks.hStimMirrorPrep,stimBoardID,0:1,{'X Mirror','Y Mirror'},-5,5);
 
 stimTasks.hStimShutter = dabs.ni.daqmx.Task('Stim Shutter Toggle');
-createDOChan(stimTasks.hStimShutter,'ExtGalvo','port0/line1');
+createDOChan(stimTasks.hStimShutter,stimBoardID,'port0/line1');
 
 stimTasks.hStimPiezo = dabs.ni.daqmx.Task('Stim Piezo Position');
 createAOVoltageChan(stimTasks.hStimPiezo,'si4-2',0,{'Stim Piezo'},-5,5);
