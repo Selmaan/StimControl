@@ -22,7 +22,7 @@ function varargout = StimGUI(varargin)
 
 % Edit the above text to modify the response to help StimGUI
 
-% Last Modified by GUIDE v2.5 02-Oct-2014 11:48:39
+% Last Modified by GUIDE v2.5 07-Oct-2014 14:44:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,8 +63,11 @@ guidata(hObject, handles);
 
 [stimData.refFile,stimData.refPath] = uigetfile('.tif');
 [stimData.imData,stimData.imMeta] = tiffRead([stimData.refPath stimData.refFile]);
-imLim = prctile(stimData.imData(:),[1 99]);
-stimData.imRef = (stimData.imData-imLim(1))/(imLim(2)-imLim(1));
+imLimGreen = prctile(reshape(stimData.imData(:,:,2),[],1),[1 99]);
+imLimRed = prctile(reshape(stimData.imData(:,:,1),[],1),[1 99]);
+stimData.imRef(:,:,1) = (stimData.imData(:,:,2)-imLimGreen(1))/(imLimGreen(2)-imLimGreen(1));
+stimData.imRef(:,:,2) = (stimData.imData(:,:,1)-imLimRed(1))/(imLimRed(2)-imLimRed(1));
+stimData.imRef(:,:,3) = 0;
 axes(handles.axes1),
 imshow(stimData.imRef),
 
@@ -178,26 +181,28 @@ end
 
 
 % --- Executes on slider movement.
-function gainSlider_Callback(hObject, eventdata, handles)
-% hObject    handle to gainSlider (see GCBO)
+function redSlider_Callback(hObject, eventdata, handles)
+% hObject    handle to redSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 global stimData
-imGain = 10^(round(100*get(hObject,'Value'))/100);
-set(hObject,'Value',log10(imGain)),
+redGain = 10^(round(100*get(hObject,'Value'))/100);
+set(hObject,'Value',log10(redGain)),
+greenGain = 10^(round(100*get(handles.greenSlider,'Value'))/100);
 %set(handles.gainText,'String',sprintf('Gain: %1.2d',imGain)),
 stimData.roiPos = getPosition(stimData.stimROI);
+delete(stimData.stimROI),
 axes(handles.axes1),
-imshow(stimData.imRef*imGain),
+imshow(cat(3,stimData.imRef(:,:,1)*redGain,stimData.imRef(:,:,2)*greenGain,stimData.imRef(:,:,3))),
 stimData.stimROI = imellipse(gca,stimData.roiPos);
 end
 
 % --- Executes during object creation, after setting all properties.
-function gainSlider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gainSlider (see GCBO)
+function redSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to redSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -329,12 +334,20 @@ global stimData
 
 [stimData.refFile,stimData.refPath] = uigetfile([stimData.refPath '*.tif']);
 [stimData.imData,stimData.imMeta] = tiffRead([stimData.refPath stimData.refFile]);
-imLim = prctile(stimData.imData(:),[1 99]);
-stimData.imRef = (stimData.imData-imLim(1))/(imLim(2)-imLim(1));
+imLimGreen = prctile(reshape(stimData.imData(:,:,2),[],1),[1 99]);
+imLimRed = prctile(reshape(stimData.imData(:,:,1),[],1),[1 99]);
+stimData.imRef(:,:,1) = (stimData.imData(:,:,2)-imLimGreen(1))/(imLimGreen(2)-imLimGreen(1));
+stimData.imRef(:,:,2) = (stimData.imData(:,:,1)-imLimRed(1))/(imLimRed(2)-imLimRed(1));
+stimData.imRef(:,:,3) = 0;
 stimData.roiPos = getPosition(stimData.stimROI);
+delete(stimData.stimROI),
 axes(handles.axes1),
 imshow(stimData.imRef),
 stimData.stimROI = imellipse(gca,stimData.roiPos);
+
+stimData.imZoom = stimData.imMeta.acq.zoomFactor;
+stimData.XYmult = [stimData.imMeta.acq.scanAngleMultiplierFast,stimData.imMeta.acq.scanAngleMultiplierSlow];
+
 
 end
 
@@ -366,4 +379,37 @@ function daqmxTaskSafeClear(task)
         task.clear();
     catch ME
     end
+end
+
+
+% --- Executes on slider movement.
+function greenSlider_Callback(hObject, eventdata, handles)
+% hObject    handle to redSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+global stimData
+greenGain = 10^(round(100*get(hObject,'Value'))/100);
+set(hObject,'Value',log10(greenGain)),
+redGain = 10^(round(100*get(handles.redSlider,'Value'))/100);
+%set(handles.gainText,'String',sprintf('Gain: %1.2d',imGain)),
+stimData.roiPos = getPosition(stimData.stimROI);
+delete(stimData.stimROI),
+axes(handles.axes1),
+imshow(cat(3,stimData.imRef(:,:,1)*redGain,stimData.imRef(:,:,2)*greenGain,stimData.imRef(:,:,3))),
+stimData.stimROI = imellipse(gca,stimData.roiPos);
+end
+
+% --- Executes during object creation, after setting all properties.
+function greenSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to redSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
 end
