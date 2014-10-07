@@ -271,7 +271,7 @@ function [xSig,ySig,pockSig] = createStimSignals
 
 global stimData
 scanAmp = stimData.XYmult.*20/(3*stimData.imZoom);
-imPix = fliplr(size(stimData.imData)); %Flipped so that first entry is 'fast'/image width, second is 'slow'/image height
+imPix = fliplr(size(stimData.imData(:,:,1))); %Flipped so that first entry is 'fast'/image width, second is 'slow'/image height
 roiRect = getPosition(stimData.stimROI);
 roiCentroid = [roiRect(1) + roiRect(3)/2, roiRect(2) + roiRect(4)/2];
 cellDiameter = abs(scanAmp.*roiRect(3:4)./imPix);
