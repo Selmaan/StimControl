@@ -283,6 +283,12 @@ cellOffset = (roiCentroid-1).*(scanAmp./(imPix-1))-(scanAmp./2);
 [xSig, ySig] = genSpiralSigs(cellDiameter, cellOffset,...
         stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz, stimData.ampCompensation);
 pockSig = [stimData.stimPow*ones(length(xSig)-1,1); zeros(1,1)];
+%Make pockSig pulse at 50% duty cycle at 10 pulses/sec
+pulseSamples = length(pockSig);
+pulseTimeBase = linspace(0,20*pi*stimData.stimDur,pulseSamples)';
+pockPulse = square(pulseTimeBase);
+pockPulse(pockPulse<0) = 0;
+pockSig = pockSig.*pockPulse;
 end
 
 % --- Executes on button press in armButton.
