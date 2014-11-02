@@ -76,7 +76,7 @@ stimData.XYmult = [stimData.imMeta.acq.scanAngleMultiplierFast,stimData.imMeta.a
 stimData.stimDur = 30;
 stimData.stimPow = 1.5;
 stimData.stimRot = 1.5e3;
-stimData.stimOsc = stimData.stimRot / (2*pi-2/3);
+stimData.stimOsc = [];
 stimData.piezoPos = 0;
 stimData.ampCompensation = true;
 

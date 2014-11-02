@@ -220,7 +220,12 @@ stimData.imZoom = str2double(get(handles.zoomEdit,'String'));
 stimData.stimDur = str2double(get(handles.durEdit,'String'));
 stimData.stimPow = str2double(get(handles.powerEdit,'String'));
 stimData.stimRot = str2double(get(handles.rotEdit,'String'));
-stimData.stimOsc = str2double(get(handles.oscEdit,'String'));
+oscVar = str2double(get(handles.oscEdit,'String'));
+if isnan(oscVar)
+    stimData.stimOsc = [];
+else
+    stimData.stimOsc = oscVar;
+end
 stimData.piezoPos = str2double(get(handles.piezoEdit,'String'));
 close(handles.figure1)
 
