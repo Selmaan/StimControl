@@ -277,9 +277,6 @@ roiCentroid = [roiRect(1) + roiRect(3)/2, roiRect(2) + roiRect(4)/2];
 cellDiameter = abs(scanAmp.*roiRect(3:4)./imPix);
 cellOffset = (roiCentroid-1).*(scanAmp./(imPix-1))-(scanAmp./2);
 
-% roiDiameter = (roiRect(3:4) - 1)*(scanAmp/511);
-% roiOffset = (roiCentroid-1)*(scanAmp/511)-(scanAmp/2);
-
 [xSig, ySig] = genSpiralSigs(cellDiameter, cellOffset,...
         stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz, stimData.ampCompensation);
 pockSig = [stimData.stimPow*ones(length(xSig)-1,1); zeros(1,1)];

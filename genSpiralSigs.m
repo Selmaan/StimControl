@@ -16,10 +16,10 @@ tFreq = t * (2*pi*beamSpeed);
 tAmp = t * (2*pi*shrinkSpeed);
 
 amp = sqrt((1-sawtooth(tAmp,1/2))/2);
-cosSig=cos(tFreq).*(amp*axesDiameter(1)/2);
-sinSig=sin(tFreq).*(amp*axesDiameter(2)/2);
-xSig = (cosSig+sinSig)/sqrt(2);
-ySig = (cosSig-sinSig)/sqrt(2);
+cosSig=cos(tFreq);
+sinSig=sin(tFreq);
+xSig = (amp*axesDiameter(1)/2).*(cosSig+sinSig)./sqrt(2);
+ySig = (amp*axesDiameter(2)/2).*(cosSig-sinSig)./sqrt(2);
 
 if rateCompensation
     %build lookup table for amplitude conversion
