@@ -22,7 +22,7 @@ function varargout = StimGUI(varargin)
 
 % Edit the above text to modify the response to help StimGUI
 
-% Last Modified by GUIDE v2.5 07-Oct-2014 14:44:10
+% Last Modified by GUIDE v2.5 02-Nov-2014 16:58:41
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -150,7 +150,6 @@ if strcmp('Arm Stimulation',get(handles.armButton,'String'))
     writeAnalogData(stimTasks.hStimPock, stimData.pockSig, 10,false),
     control(stimTasks.hStim,'DAQmx_Val_Task_Commit'),
     control(stimTasks.hStimPock,'DAQmx_Val_Task_Commit'),
-    drawnow,
 elseif strcmp('Armed!',get(handles.armButton,'String'))
     set(handles.armButton,'String','Arm Stimulation')
 end
@@ -266,28 +265,6 @@ daqmxTaskSafeClear(stimTasks.dummy2)
 
 end
 
-% --- Function to create Stimulation Signal from current parameters/ROI --%
-function [xSig,ySig,pockSig] = createStimSignals
-
-global stimData
-scanAmp = stimData.XYmult.*20/(3*stimData.imZoom);
-imPix = fliplr(size(stimData.imData(:,:,1))); %Flipped so that first entry is 'fast'/image width, second is 'slow'/image height
-roiRect = getPosition(stimData.stimROI);
-roiCentroid = [roiRect(1) + roiRect(3)/2, roiRect(2) + roiRect(4)/2];
-cellDiameter = abs(scanAmp.*roiRect(3:4)./imPix);
-cellOffset = (roiCentroid-1).*(scanAmp./(imPix-1))-(scanAmp./2);
-
-[xSig, ySig] = genSpiralSigs(cellDiameter, cellOffset,...
-        stimData.stimDur*1e-3, stimData.stimRot, stimData.stimOsc, stimData.sHz, stimData.ampCompensation);
-pockSig = [stimData.stimPow*ones(length(xSig)-1,1); zeros(1,1)];
-%Make pockSig pulse at 50% duty cycle at 10 pulses/sec
-pulseSamples = length(pockSig);
-pulseTimeBase = linspace(0,20*pi*stimData.stimDur,pulseSamples)';
-pockPulse = square(pulseTimeBase);
-pockPulse(pockPulse<0) = 0;
-pockSig = pockSig.*pockPulse;
-end
-
 % --- Executes on button press in armButton.
 function armButton_Callback(hObject, eventdata, handles)
 % hObject    handle to armButton (see GCBO)
@@ -375,16 +352,6 @@ end
 stop(stimTasks.hStimShutter),
 end
 
-% Clears task if present, otherwise avoids error
-function daqmxTaskSafeClear(task)
-    try
-        clkRate = task.sampClkRate; % if this call fails, the task does not exist anymore
-        task.clear();
-    catch ME
-    end
-end
-
-
 % --- Executes on slider movement.
 function greenSlider_Callback(hObject, eventdata, handles)
 % hObject    handle to redSlider (see GCBO)
@@ -415,4 +382,15 @@ function greenSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+end
+
+
+% --- Executes on button press in trigStimMode.
+function trigStimMode_Callback(hObject, eventdata, handles)
+% hObject    handle to trigStimMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+trigStimModeGUI;
+
 end
