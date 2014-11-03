@@ -263,6 +263,13 @@ daqmxTaskSafeClear(stimTasks.hStimShutter)
 daqmxTaskSafeClear(stimTasks.hStimPiezo)
 daqmxTaskSafeClear(stimTasks.dummy2)
 
+    try
+        daqmxTaskSafeClear(stimTasks.dummy3)
+        daqmxTaskSafeClear(stimTasks.fCtr)
+        daqmxTaskSafeClear(stimTasks.trigStim)
+        daqmxTaskSafeClear(stimTasks.hTrigPock)
+        daqmxTaskSafeClear(stimTasks.dummy4)
+    end
 end
 
 % --- Executes on button press in armButton.

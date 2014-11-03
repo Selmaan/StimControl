@@ -63,8 +63,8 @@ stimData.trigMode.nStimTrials = 0;
 stimData.trigMode.nStimFrames = 0;
 
 %create stim signals and tasks
-[stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals;
-createCounterTasks(stimData.xSig,stimData.sHz);
+%[stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals;
+%createCounterTasks(stimData.xSig,stimData.sHz);
 
 % UIWAIT makes trigStimModeGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -139,9 +139,11 @@ function doTrigMode_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global stimData stimTasks
 
-%Create stimulation signal for current ROI, preposition mirrors and
-%piezo given current parameters, and write stim signals
+%create signal and tasks
 [stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals;
+createCounterTasks(stimData.xSig,stimData.sHz);
+%preposition mirrors and
+%piezo given current parameters, and write stim signals
 writeAnalogData(stimTasks.hStimMirrorPrep,[mean(stimData.xSig),mean(stimData.ySig)], 10, true),
 stop(stimTasks.hStimMirrorPrep),
 writeAnalogData(stimTasks.hStimPiezo,stimData.piezoPos/40, 10, true),
@@ -156,18 +158,19 @@ stimData.trigsDone = 0;
 start(stimTasks.fCtr),
 start(stimTasks.trigStim),
 start(stimTasks.hTrigPock),
-%update stimFrames variable so that info is saved
+
+display('Triggers Ready!'),
 
 
 function createCounterTasks(sig,sHz)
 
-global stimTasks
+global stimTasks stimData
 
 %Specify board information
 stimBoardID = 'ExtGalvoUSB';
 ctrChanID = 0;
 frameClockSrcTerm = 'PFI0';
-dividedClockOutTerm = [];   % leave empty if exported signal is not needed
+dividedClockOutTerm = 'PFI1';   % leave empty if exported signal is not needed
 
 % Determine frame counter parameters
 frameInterval = stimData.trigMode.nStimFrames;
@@ -177,7 +180,9 @@ initialDelay = frameInterval-1;
 
 % Delete previous tasks if they exist
 if isfield(stimTasks,'dummy3')
-    deleteCounterTasks,
+    try
+        deleteCounterTasks,
+    end
 end
 
 stimTasks.dummy3 = dabs.ni.daqmx.Task('dummyTask3');
@@ -203,7 +208,7 @@ stimTasks.hTrigPock = dabs.ni.daqmx.Task('Trig Pockels');
 createAOVoltageChan(stimTasks.hTrigPock,'si4-2',1,{'Stim Pockels'},-5,5);
 cfgSampClkTiming(stimTasks.hTrigPock, sHz, 'DAQmx_Val_FiniteSamps', size(sig,1)),
 cfgOutputBuffer(stimTasks.hTrigPock, sHz),
-cfgDigEdgeStartTrig(stimTasks.hTrigPock, ctrIntOutTerm),
+cfgDigEdgeStartTrig(stimTasks.hTrigPock, 'PFI10'),
 
 stimTasks.dummy4 = dabs.ni.daqmx.Task('dummyTask4');
 
@@ -228,6 +233,7 @@ stimData.trigsDone = stimData.trigsDone + 1;
 stimFrames(end+1) = stimData.trigMode.nStimFrames * stimData.trigsDone;
 stop(stimTasks.trigStim),
 stop(stimTasks.hTrigPock),
+control(stimTasks.trigStim,'DAQmx_Val_Task_Unreserve'),
 
 maxTrig = stimData.trigMode.nStimTrials;
 if stimData.trigsDone < maxTrig
@@ -239,5 +245,8 @@ if stimData.trigsDone < maxTrig
     start(stimTasks.hTrigPock),
 else
     stop(stimTasks.fCtr)
+    control(stimTasks.fCtr,'DAQmx_Val_Task_Unreserve'),
+    control(stimTasks.trigStim,'DAQmx_Val_Task_Unreserve'),
+    control(stimTasks.hTrigPock,'DAQmx_Val_Task_Unreserve'),
 end
 
