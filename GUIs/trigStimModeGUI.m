@@ -176,7 +176,7 @@ dividedClockOutTerm = 'PFI1';   % leave empty if exported signal is not needed
 frameInterval = stimData.trigMode.nStimFrames;
 lowTicks = floor(frameInterval/2);
 highTicks = ceil(frameInterval/2);
-initialDelay = frameInterval-1;
+initialDelay = frameInterval;
 
 % Delete previous tasks if they exist
 if isfield(stimTasks,'dummy3')
@@ -231,6 +231,7 @@ global stimData stimTasks stimFrames
 
 stimData.trigsDone = stimData.trigsDone + 1;
 stimFrames(end+1) = stimData.trigMode.nStimFrames * stimData.trigsDone;
+drawnow,
 stop(stimTasks.trigStim),
 stop(stimTasks.hTrigPock),
 control(stimTasks.trigStim,'DAQmx_Val_Task_Unreserve'),
