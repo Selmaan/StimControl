@@ -159,6 +159,7 @@ start(stimTasks.fCtr),
 start(stimTasks.trigStim),
 start(stimTasks.hTrigPock),
 
+home,
 display('Triggers Ready!'),
 
 
@@ -244,10 +245,13 @@ if stimData.trigsDone < maxTrig
     writeAnalogData(stimTasks.hTrigPock, stimData.pockSig, 10,false),
     start(stimTasks.trigStim),
     start(stimTasks.hTrigPock),
+    fprintf('Stim: #%03.0f\n',stimData.trigsDone);
 else
     stop(stimTasks.fCtr)
     control(stimTasks.fCtr,'DAQmx_Val_Task_Unreserve'),
     control(stimTasks.trigStim,'DAQmx_Val_Task_Unreserve'),
     control(stimTasks.hTrigPock,'DAQmx_Val_Task_Unreserve'),
+    fprintf('Final Stim: #%03.0f\n',stimData.trigsDone);
 end
+
 
