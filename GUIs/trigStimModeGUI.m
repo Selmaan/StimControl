@@ -59,8 +59,8 @@ handles.output = hObject;
 guidata(hObject, handles);
 
 global stimData
-stimData.trigMode.nStimTrials = 0;
-stimData.trigMode.nStimFrames = 0;
+stimData.trigMode.nStimTrials = 10;
+stimData.trigMode.nStimFrames = 90;
 
 %create stim signals and tasks
 %[stimData.xSig,stimData.ySig,stimData.pockSig] = createStimSignals;
