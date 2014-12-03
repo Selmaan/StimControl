@@ -4,28 +4,37 @@
 %%
 close all,
 cellDiam = 15;
-im = r2;
+%im = r2;
 
 %%
-ref = medfilt2(im,[1 1]*round(cellDiam/3),'symmetric');
+imFilt = medfilt2(im,[1 1]*round(cellDiam/3),'symmetric');
 blurFilter = fspecial('gaussian',300,cellDiam*2);
-blurImage = imfilter(ref,blurFilter,'replicate');
-ref = ref ./ blurImage;
+blurImage = imfilter(imFilt,blurFilter,'replicate');
+ref = imFilt ./ blurImage;
+refSub = imFilt - blurImage;
 
 %%
-cellSE = strel('ball',round(cellDiam/1.5),1,0);
+cellSE = strel('ball',round(cellDiam/2),1.5,0);
 openRef = imopen(ref,cellSE);
 refPks = imregionalmax(openRef);
 maxInds = find(refPks);
 [maxI,maxJ] = find(refPks);
-maxVals = ref(maxInds);
+maxVals = refSub(maxInds);
 [~,pkOrd] = sort(maxVals,1,'descend');
 
 %%
 
-hROIfig = figure;imagesc(ref),hold on,
-plot(maxJ(pkOrd(1:100)),maxI(pkOrd(1:100)),'k*')
-plot(maxJ(pkOrd(101:200)),maxI(pkOrd(101:200)),'r*')
+col = flipud(parula(300));
+figure,imshow(imFilt,[]),hold on,
+for i=1:300
+    plot(maxJ(pkOrd(i)),maxI(pkOrd(i)),'*','color',col(i,:))
+end
+
+
+% 
+% hROIfig = figure;imagesc(ref),hold on,
+% plot(maxJ(pkOrd(1:100)),maxI(pkOrd(1:100)),'k*')
+% plot(maxJ(pkOrd(101:200)),maxI(pkOrd(101:200)),'r*')
 
 % hMaster = figure;imagesc(im)
 % hROIfig = figure;imagesc(ref),hold on,
