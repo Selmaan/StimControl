@@ -70,12 +70,24 @@ if isempty(StimROIs)
     StimROIs.StimCentroids = genStimCentroids(StimROIs.imFile,0);
     StimROIs.ref(:,:,1) = imadjust(StimROIs.imData(:,:,2)/2^14);
     StimROIs.ref(:,:,2) = imadjust(StimROIs.imData(:,:,1)/2^14);
-    StimROIs.ref(:,:,3) = 0;    
+    StimROIs.ref(:,:,3) = 0;
+    StimROIs.roi = [];
+    redraw = 0;
+else
+    redraw = 1;
 end
 
 axes(handles.hAxMaster),
-hImMaster = imshow(StimROIs.ref);
-axes(handles.hAxROI),
+imshow(StimROIs.ref);
+if redraw == 1
+    for nROI = 1:length(StimROIs.roi)
+        elPos(1:2) = StimROIs.roi(nROI).elCentroid - StimROIs.roi(nROI).elRadius;
+        elPos(3:4) = StimROIs.roi(nROI).elRadius * 2;
+        StimROIs.roi(nROI).hEl = imellipse(handles.hAxMaster,elPos);
+        setColor(StimROIs.roi(nROI).hEl,'k')
+    end
+end
+axes(handles.hAxROI),     
 imshow(StimROIs.ref),
 nextAutoROI(hObject,handles);
 
@@ -178,7 +190,7 @@ switch eventdata.Key
         delete(StimROIs.hPoint),
         delete(StimROIs.hEllipse),
         nextAutoROI(hObject,handles),
-    case 'v'
+    case 's'
         vCheck = input('Validate ROIs to match display? ');
         if vCheck
             % Check to see if valid ellipse remains
@@ -190,6 +202,11 @@ switch eventdata.Key
             StimROIs.roiNum = sum(validROI)+1;
             fprintf('ROIs Validated, current ROI num: %03.0f \n',StimROIs.roiNum),
         end
+        
+        % Convert pixel coordinates to volts
+        StimROIs = px2vROI(StimROIs);
+        % Assign variable to base (for easy access, it's global already)
+        assignin('base','StimROIs',StimROIs);
 end
 
 
