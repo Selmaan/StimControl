@@ -22,7 +22,7 @@ function varargout = roiSelector(varargin)
 
 % Edit the above text to modify the response to help roiSelector
 
-% Last Modified by GUIDE v2.5 03-Dec-2014 01:46:05
+% Last Modified by GUIDE v2.5 03-Dec-2014 11:56:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -74,11 +74,10 @@ if isempty(StimROIs)
 end
 
 axes(handles.hAxMaster),
-imshow(StimROIs.ref),
+hImMaster = imshow(StimROIs.ref);
 axes(handles.hAxROI),
 imshow(StimROIs.ref),
 nextAutoROI(hObject,handles);
-
 
 % UIWAIT makes roiSelector wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -101,15 +100,17 @@ global StimROIs
 
 % Adjust counters and set parameters / indices
 ROIcentroid = StimROIs.StimCentroids(StimROIs.autoNum,:);
-ROIwindow = ceil(StimROIs.imZoom * 10);
+guessCellOutline(hObject, handles, ROIcentroid);
+
+function guessCellOutline(hObject, handles, ROIcentroid)
+% Function to use an ROI centroid (from auto or mouse click) to estimate a
+% cell outline
+
+global StimROIs
+
+ROIwindow = ceil(StimROIs.imZoom * 15);
 xROI = ROIcentroid(2) + [-ROIwindow, ROIwindow];
 yROI = ROIcentroid(1) + [-ROIwindow, ROIwindow];
-
-%xROI = StimROIs.ROIcentroid(2) + (-ROIwindow:ROIwindow);
-%xROI(xROI<1) = 1; xROI(xROI>size(StimROIs.ref,2)) = size(StimROIs.ref,2);
-%yROI = StimROIs.ROIcentroid(1) + (-ROIwindow:ROIwindow);
-%yROI(yROI<1) = 1; yROI(yROI>size(StimROIs.ref,1)) = size(StimROIs.ref,1);
-%imROI = imadjust(StimROIs.ref(yROI,xROI,1));
 
 % Extract estimate of cell outline
 redRef = StimROIs.ref(:,:,1);
@@ -138,7 +139,6 @@ elMin = 1+ROIcentroid([2,1])-cellRad;
 elDiam = 2*cellRad;
 StimROIs.hEllipse = imellipse(gca,[elMin(1) elMin(2) elDiam elDiam]);
 
-
 % --- Executes on key press with focus on figure1 or any of its controls.
 function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
@@ -154,6 +154,7 @@ switch eventdata.Key
         elPos = getPosition(StimROIs.hEllipse);
         axes(handles.hAxMaster),
         StimROIs.roi(StimROIs.roiNum).hEl = imellipse(gca,elPos);
+        setColor(StimROIs.roi(StimROIs.roiNum).hEl,'k'),
         StimROIs.roi(StimROIs.roiNum).elRadius = elPos(3:4)/2;
         StimROIs.roi(StimROIs.roiNum).elCentroid = elPos(1:2) + elPos(3:4)/2;
         StimROIs.roiNum = StimROIs.roiNum + 1;
@@ -165,5 +166,54 @@ switch eventdata.Key
         StimROIs.autoNum = StimROIs.autoNum + 1;
         delete(StimROIs.hPoint),
         delete(StimROIs.hEllipse),
-        nextAutoROI(hObject,handles),        
+        nextAutoROI(hObject,handles),
+    case 'return'
+        elPos = getPosition(StimROIs.hEllipse);
+        axes(handles.hAxMaster),
+        StimROIs.roi(StimROIs.roiNum).hEl = imellipse(gca,elPos);
+        setColor(StimROIs.roi(StimROIs.roiNum).hEl,'k'),
+        StimROIs.roi(StimROIs.roiNum).elRadius = elPos(3:4)/2;
+        StimROIs.roi(StimROIs.roiNum).elCentroid = elPos(1:2) + elPos(3:4)/2;
+        StimROIs.roiNum = StimROIs.roiNum + 1;
+        delete(StimROIs.hPoint),
+        delete(StimROIs.hEllipse),
+        nextAutoROI(hObject,handles),
+    case 'v'
+        vCheck = input('Validate ROIs to match display? ');
+        if vCheck
+            % Check to see if valid ellipse remains
+            for nROI = 1:StimROIs.roiNum-1
+                validROI(nROI) = isvalid(StimROIs.roi(nROI).hEl);
+            end
+            % Eliminate invalid rois and reset the roi number counter
+            StimROIs.roi = StimROIs.roi(validROI);
+            StimROIs.roiNum = sum(validROI)+1;
+            fprintf('ROIs Validated, current ROI num: %03.0f \n',StimROIs.roiNum),
+        end
+end
+
+
+function seedClick(hObject, handles)
+
+global StimROIs
+
+% get click coordinates
+clickCoord = get(handles.hAxMaster, 'currentpoint');
+% delete old objects
+delete(StimROIs.hPoint),
+delete(StimROIs.hEllipse),
+% use click as initialization for next cell outline
+ROIcentroid =clickCoord(1,[2, 1]);
+guessCellOutline(hObject, handles, ROIcentroid);
+
+
+% --- Executes on mouse press over figure background, over a disabled or
+% --- inactive control, or over an axes background.
+function figure1_WindowButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if gca == handles.hAxMaster
+    seedClick(hObject,handles)
 end
