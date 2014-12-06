@@ -3,7 +3,7 @@ function [sigs, stimParams] = genStimSig(targ,stimParams)
 % function to generate stimulation signal for a single target. Does not
 % handle prepositioning of mirrors or turning off pockels after stimulation
 %
-% genStimSig(targ,stimParams)
+% [sigs, stimParams] = genStimSig(targ,stimParams)
 %
 % stimParams field should contain:
 % 'sHz' - AI sampling rate
