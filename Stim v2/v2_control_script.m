@@ -23,6 +23,14 @@ end
 trials(1) = [];
 
 %% Generate Experiment
+repeats = 10;
+
+stimExpt = genExpt(StimROIs,trials,repeats);
+stimExpt = runExpt(stimExpt);
+
+% rewrite runExpt using callbacks so that command line access isn't blocked
+% during experiment
+
 
 % Experiment needs to generate sequential order of trials, and handle AO
 % tasks such as :
