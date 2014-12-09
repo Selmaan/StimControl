@@ -5,11 +5,11 @@ function [trial, stimParams] = genTrial(StimROIs,nTarg,trialParams,stimParams)
 % [trial, stimParams] = genTrial(StimROIs,nTarg,trialParams,stimParams)
 %
 % nTarg is the target number for this trial
+% trialParams is necessary, and must include fields:
+%       nTarg - the target number corresponding to StimROIs.targ
+%       nStim - the number of stimulations in the trial
+%       stimFreq - the frequency at which to repeat stimulation (note, function does not ensure repeats cannot overlap in time)
 % stimParams is optional, and if empty will inherit sHz from trialParams
-% trialParams is necessary, and must include fields
-% nTarg - the target number corresponding to StimROIs.targ
-% nStim - the number of stimulations in the trial
-% stimFreq - the frequency at which to repeat stimulation (note, function does not ensure repeats cannot overlap in time)
 
 %% Input handling / error checking
 
@@ -62,15 +62,16 @@ for nStim = 1:trialParams.nStim
     pSig(ind) = stimSig.pockSig;
 end
 
-%Reposition mirrors at cell center and blank laser w/ pockels btw stims
-xSig(isnan(xSig)) = StimROIs.targ(nTarg).offset(1);
-ySig(isnan(ySig)) = StimROIs.targ(nTarg).offset(2);
-pSig(isnan(pSig)) = 0;
-
 %Append signals to set laser pockels-blanked and parked on cell at trial end
-xSig(end+1) = StimROIs.targ(nTarg).offset(1);
-ySig(end+1) = StimROIs.targ(nTarg).offset(2);
+trial.offset = StimROIs.targ(nTarg).offset;
+xSig(end+1) = trial.offset(1);
+ySig(end+1) = trial.offset(2);
 pSig(end+1) = 0;
+
+%Reposition mirrors at cell center and blank laser w/ pockels btw stims
+xSig(isnan(xSig)) = trial.offset(1);
+ySig(isnan(ySig)) = trial.offset(2);
+pSig(isnan(pSig)) = 0;
 
 trial.xSig = xSig;
 trial.ySig = ySig;

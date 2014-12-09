@@ -1,54 +1,86 @@
-function stimExpt = runExpt(stimExpt)
+function runExpt
+
+global stimExpt
 
 stimExpt.started = 1;
-trialOrder = stimExpt.trialOrder;
 
-for repeat = 1:size(trialOrder,1)
-    stimExpt.cRepeat = repeat;
-    for target = 1:size(trialOrder,2)
-        stimExpt.cTrial = target;
-        nTarget = trialOrder(repeat,target);
-        % Preposition Mirrors
-        offset = stimExpt.StimROIs.targ(nTarget).offset;
-        writeAnalogData(stimExpt.StimControl.hStimMirrorPrep,[offset(1),offset(2)], 10, true),
-        stop(stimExpt.StimControl.hStimMirrorPrep),
-    
-        % Load signals
-        xSig = trials(nTarget).xSig;
-        ySig = trials(nTarget).ySig;
-        pSig = trials(nTarget).pSig;
-        cfgSampClkTiming(stimExpt.StimControl.hStim, stimExpt.sHz, 'DAQmx_Val_FiniteSamps', size(xSig,1)),
-        cfgSampClkTiming(stimExpt.StimControl.hStimPock, stimExpt.sHz, 'DAQmx_Val_FiniteSamps', size(xSig,1)),
-        writeAnalogData(stimExpt.StimControl.hStim, [xSig,ySig], 10,false),
-        writeAnalogData(stimExpt.StimControl.hStimPock, pSig, 10,false),
+% set callback
+registerDoneEvent(stimExpt.StimControl.hStim,@(src,evnt)cbStimDone(src,evnt)),
+
+% Open shutter
+writeDigitalData(stimExpt.StimControl.hStimShutter, 1, 10, true),
+stimExpt.shutterStatus = 'open';
+
+% Prepare and start tasks
+nTrial = stimExpt.trialOrder(stimExpt.cRepeat, stimExpt.cTrial);
+writeAnalogData(stimExpt.StimControl.hStimMirrorPrep,[stimExpt.trials(nTrial).offset(1),stimExpt.trials(nTrial).offset(2)], 10, true),
+stop(stimExpt.StimControl.hStimMirrorPrep),
+xSig = stimExpt.trials(nTrial).xSig;
+ySig = stimExpt.trials(nTrial).ySig;
+pSig = stimExpt.trials(nTrial).pSig;
+cfgSampClkTiming(stimExpt.StimControl.hStim, stimExpt.sHz, 'DAQmx_Val_FiniteSamps', size(xSig,1)),
+cfgSampClkTiming(stimExpt.StimControl.hStimPock, stimExpt.sHz, 'DAQmx_Val_FiniteSamps', size(xSig,1)),
+writeAnalogData(stimExpt.StimControl.hStim, [xSig,ySig], 10,false),
+writeAnalogData(stimExpt.StimControl.hStimPock, pSig, 10,false),
+start(stimExpt.StimControl.hStim),
+start(stimExpt.StimControl.hStimPock),
         
-%         % prepare tasks
-%         control(stimTasks.hStim,'DAQmx_Val_Task_Commit'),
-%         control(stimTasks.hStimPock,'DAQmx_Val_Task_Commit'),
-        
-        % start tasks
-        start(stimExpt.StimControl.hStim),
-        start(stimExpt.StimControl.hStim),
-        
-        % update display
-        %no display implemented yet, just print to command line
-        fprintf('Repeat: %03.0f, targetNum: %03.0f, targetID: %03.0f\n',repeat,target,nTarget),
-        
-        % wait until triggered/complete
-        %implement callback function (in fact, most of this function can be
-        %written as callbacks)
-        
-        % unreserve resources
-        stop(stimTasks.hStim),
-        stop(stimTasks.hStimPock),
-        control(stimTasks.hStim,'DAQmx_Val_Task_Unreserve'),
-        control(stimTasks.hStimPock,'DAQmx_Val_Task_Unreserve'),
-                
-    end
+% update display
+%no display implemented yet, just print to command line
+fprintf('Beginning Experiment\n'),
+
 end
 
 
+function cbStimDone(src,evnt)
 
+global stimExpt
 
+% Stop stimulation tasks (not incl. counter)
+stop(stimExpt.StimControl.hStim),
+stop(stimExpt.StimControl.hStimPock),
+control(stimExpt.StimControl.hStim,'DAQmx_Val_Task_Unreserve'),
 
-stimExpt.completed = 1;
+% Find next target, and detect completion of expt or repeat
+trialOrder = stimExpt.trialOrder;
+stimExpt.cTrial = mod(stimExpt.cTrial+1, size(trialOrder,2));
+if stimExpt.cTrial == 0
+    stimExpt.cRepeat = mod(stimExpt.cRepeat+1, size(trialOrder,1));
+    if stimExpt.cRepeat == 0
+        stop(stimExpt.StimControl.fCtr),
+        control(stimExpt.StimControl.fCtr,'DAQmx_Val_Task_Unreserve'),
+        control(stimExpt.StimControl.hStimPock,'DAQmx_Val_Task_Unreserve'),
+        stimExpt.completed = 1;
+        writeDigitalData(stimExpt.StimControl.hStimShutter, 0, 10, true),
+        stimExpt.shutterStatus = 'closed';
+        fprintf('Experiment Complete'),
+        return
+    end
+    fprintf('Starting Repeat %03.0f',stimExpt.cRepeat),
+    stimExpt.cTrial = 1;
+end
+
+nTrial = trialOrder(stimExpt.cRepeat, stimExpt.cTrial);
+
+% Position Mirrors
+writeAnalogData(stimExpt.StimControl.hStimMirrorPrep,[stimExpt.trials(nTrial).offset(1),stimExpt.trials(nTrial).offset(2)], 10, true),
+stop(stimExpt.StimControl.hStimMirrorPrep),
+
+% Load signals
+xSig = stimExpt.trials(nTrial).xSig;
+ySig = stimExpt.trials(nTrial).ySig;
+pSig = stimExpt.trials(nTrial).pSig;
+cfgSampClkTiming(stimExpt.StimControl.hStim, stimExpt.sHz, 'DAQmx_Val_FiniteSamps', size(xSig,1)),
+cfgSampClkTiming(stimExpt.StimControl.hStimPock, stimExpt.sHz, 'DAQmx_Val_FiniteSamps', size(xSig,1)),
+writeAnalogData(stimExpt.StimControl.hStim, [xSig,ySig], 10,false),
+writeAnalogData(stimExpt.StimControl.hStimPock, pSig, 10,false),
+
+% Start Tasks
+start(stimExpt.StimControl.hStim),
+start(stimExpt.StimControl.hStimPock),
+        
+% update display
+%no display implemented yet, just print to command line
+fprintf('Repeat: %03.0f, targetNum: %03.0f, targetID: %03.0f\n',stimExpt.cRepeat,stimExpt.cTrialt,nTrial),
+
+end

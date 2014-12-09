@@ -24,9 +24,10 @@ trials(1) = [];
 
 %% Generate Experiment
 repeats = 10;
+ITI = 30;
 
-stimExpt = genExpt(StimROIs,trials,repeats);
-stimExpt = runExpt(stimExpt);
+stimExpt = genExpt(trials,repeats,ITI);
+runExpt;
 
 % rewrite runExpt using callbacks so that command line access isn't blocked
 % during experiment
