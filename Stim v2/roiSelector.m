@@ -207,6 +207,8 @@ switch eventdata.Key
         StimROIs = px2vROI(StimROIs);
         % Assign variable to base (for easy access, it's global already)
         assignin('base','StimROIs',StimROIs);
+        % Close GUI
+        close(hObject),
 end
 
 

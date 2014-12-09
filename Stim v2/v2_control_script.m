@@ -18,14 +18,15 @@ stimTrial.nStim = 1;
 [trials, stimParams] = genTrial(StimROIs,1,trainTrial);
 for nTarg = targList
     trials(end+1) = genTrial(StimROIs,nTarg,trainTrial,stimParams);
-    trials(end+1) = genTrial(StimROIs,nTarg,stimTrial,stimParams);
+    %trials(end+1) = genTrial(StimROIs,nTarg,stimTrial,stimParams);
 end
 trials(1) = [];
 
 %% Generate Experiment
-repeats = 10;
+repeats = 20;
 ITI = 30;
 
+global stimExpt
 stimExpt = genExpt(trials,repeats,ITI);
 runExpt;
 

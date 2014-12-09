@@ -7,15 +7,13 @@ function stimExpt = genExpt(trials,repeats,ITI)
 % trials is a 1xn structure of trial structures
 % repeats is a positive number indicating number of stim trials for each target
 % ITI is a positive number indicating # of frames btw each trial (e.g. 30 for ~1 trial/second)
+% stimExpt is an optional 
 
-global stimExpt
-
-stimExpt = struct;
 stimExpt.sHz = trials(1).sHz;
 stimExpt.trials = trials;
 stimExpt.ITI = ITI;
-stimExpt.StimControl = createStimTasks(stimExpt);
 stimExpt.nRepeats = repeats;
+stimExpt.trialOrder = [];
 for repeat = 1:stimExpt.nRepeats
     stimExpt.trialOrder(repeat,:) = randperm(length(trials));
 end

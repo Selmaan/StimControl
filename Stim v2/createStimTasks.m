@@ -1,11 +1,7 @@
-function StimControl = createStimTasks(stimExpt,StimControl)
+function stimExpt = createStimTasks(stimExpt)
 
 %% Delete tasks if previously existed
-if ~exist('StimControl','var') || isempty(StimControl)
-    StimControl = struct;
-else
-    deleteStimTasks(StimControl),
-end
+deleteStimTasks,
 
 %% Set parameters
 sHz = stimExpt.sHz;
@@ -58,15 +54,5 @@ createAOVoltageChan(StimControl.hStimPiezo,stimBoard2,0,{'Stim Piezo'},-5,5);
 
 StimControl.dummy2 = dabs.ni.daqmx.Task('dummyTask2');
 
-end
-
-function deleteStimTasks(StimControl)
-    daqmxTaskSafeClear(StimControl.dummy1)
-    daqmxTaskSafeClear(StimControl.fCtr)
-    daqmxTaskSafeClear(StimControl.hStim)
-    daqmxTaskSafeClear(StimControl.hStimPock)
-    daqmxTaskSafeClear(StimControl.hStimMirrorPrep)
-    daqmxTaskSafeClear(StimControl.hStimShutter)
-    daqmxTaskSafeClear(StimControl.hStimPiezo)
-    daqmxTaskSafeClear(StimControl.dummy2)
+stimExpt.StimControl = StimControl;
 end
