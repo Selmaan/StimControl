@@ -1,4 +1,4 @@
-function stimExpt = genExpt(trials,repeats,ITI)
+function stimExpt = genExpt(StimROIs,trials,repeats,ITI)
 % Function to generate a stimulation experiment from
 %
 % stimExpt = genExpt(StimROIs,trials,repeats,ITI)
@@ -10,6 +10,7 @@ function stimExpt = genExpt(trials,repeats,ITI)
 % stimExpt is an optional 
 
 stimExpt.sHz = trials(1).sHz;
+stimExpt.StimROIs = StimROIs;
 stimExpt.trials = trials;
 stimExpt.ITI = ITI;
 stimExpt.nRepeats = repeats;
