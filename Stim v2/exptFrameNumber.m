@@ -11,10 +11,11 @@ switch evnt.EventName
     case 'frameAcquired'
          frameNum = frameNum+1;
     case {'acquisitionDone' 'focusDone'}
-        global stimExpt stimFrames
+        global stimData stimFrames
         if ~isempty(stimFrames)
-            stimExpt.stimFrames = stimFrames;
-            display(stimExpt.stimFullFile),
-            save(stimExpt.stimFullFile,'stimExpt')            
+            stimData.stimFrames = stimFrames;
+            stimData.EllipsePos = getPosition(stimData.stimROI);
+            display(stimData.stimFullFile),
+            save(stimData.stimFullFile,'stimData')            
         end
 end

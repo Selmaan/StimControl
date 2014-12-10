@@ -57,6 +57,7 @@ if stimExpt.cTrial == 0
         writeDigitalData(stimExpt.StimControl.hStimShutter, 0, 10, true),
         stimExpt.shutterStatus = 'closed';
         deleteStimTasks,
+        saveExpt,
         fprintf('Experiment Complete\n'),
         return
     end
