@@ -1,6 +1,10 @@
-function hEl = dispStimROIs(StimROIs)
+function hEl = dispStimROIs(StimROIs,ref)
 
-figure,imshow(StimROIs.ref)
+if nargin<2
+    ref = StimROIs.ref
+end
+
+figure,imshow(ref)
 
 nROIs = length(StimROIs.roi);
 
