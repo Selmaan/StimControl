@@ -34,13 +34,13 @@ ctrIntOutTerm = sprintf('/%sInternalOutput',StimControl.fCtrChan.chanNamePhysica
 StimControl.hStim = dabs.ni.daqmx.Task('X Y Stim');
 createAOVoltageChan(StimControl.hStim,stimBoardID,0:1,{'X Mirror','Y Mirror'},-5,5);
 cfgSampClkTiming(StimControl.hStim, sHz, 'DAQmx_Val_FiniteSamps', sHz),
-cfgOutputBuffer(StimControl.hStim, sHz),
+cfgOutputBuffer(StimControl.hStim, sHz*1.1),
 cfgDigEdgeStartTrig(StimControl.hStim, ctrIntOutTerm),
 
 StimControl.hStimPock = dabs.ni.daqmx.Task('Stim Pockels');
 createAOVoltageChan(StimControl.hStimPock,stimBoard2,1,{'Stim Pockels'},-5,5);
 cfgSampClkTiming(StimControl.hStimPock, sHz, 'DAQmx_Val_FiniteSamps', sHz),
-cfgOutputBuffer(StimControl.hStimPock, sHz),
+cfgOutputBuffer(StimControl.hStimPock, sHz*1.1),
 cfgDigEdgeStartTrig(StimControl.hStimPock, dividedClockInTerm),
 
 StimControl.hStimMirrorPrep = dabs.ni.daqmx.Task('Stim Mirror Pre-positioning');

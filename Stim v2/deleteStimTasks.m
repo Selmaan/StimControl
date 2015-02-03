@@ -7,6 +7,7 @@ function deleteStimTasks
     for taskNum = 1:length(tasks)
         try
             daqmxTaskSafeClear(m(tasks{taskNum})),
+        catch ME
         end
     end
 

@@ -9,9 +9,9 @@ end
 %% Identify candidate centroids
 
 % Estimate cell size in pixels from zoom level (calibrated w/ stim path on 
-% Dec 2 2014 to correspond to ~12um)
+% Feb 2 2014 to correspond to ~12um)
 zoomLvl = imMeta.acq.zoomFactor;
-cellDiam = 7.5 * zoomLvl;
+cellDiam = 11.7 * zoomLvl;
 
 % Filter red image
 im = imDual(:,:,2);
