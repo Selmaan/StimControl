@@ -4,7 +4,7 @@ StimROIs = [];
 roiSelector;
 %% Parameters
 sHz = 1e5;
-repeats = 15;
+repeats = 10;
 ITI = 60;
 %% Generate Trials
 powerTestTrials

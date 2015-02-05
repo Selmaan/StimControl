@@ -1,9 +1,11 @@
+frameRate = 29.5475;
+framePeriod = 1/frameRate;
 trialParams = [];
 trialParams.sHz = sHz;
-trialParams.stimFreq = 10;
+trialParams.stimFreq = frameRate/3; %10
 trialParams.nStim = 10;
 [~, stimParams] = genTrial(StimROIs,1,trialParams);
-stimParams.dur = 60e-3;
+stimParams.dur = framePeriod*2; % 60e-3
 
 stimMax = stimParams;
 stimMin = stimParams;
