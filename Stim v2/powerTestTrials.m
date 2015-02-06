@@ -15,7 +15,7 @@ stimMin.pockPulseFreq = 1/2e-3; %2ms per line
 stimMin.pockPulseDuty = 15/512; %cell body approx 15 pix diameter in line scan
 
 stimMed.pockPulseFreq = 1e4;
-simMed.pockPulseDuty = .2;
+stimMed.pockPulseDuty = .2;
 
 trials = repTrials(StimROIs,trialParams,stimMax);
 trials = repTrials(StimROIs,trialParams,stimMed,trials);
