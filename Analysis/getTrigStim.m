@@ -1,18 +1,32 @@
-function sEns = getTrigStim(dF, trialVec, selectionVec, nROI, showFig)
+function sEns = getTrigStim(dF, trialVec, selectionVec, nROI, showFig, deConv)
 
 if nargin < 5
     showFig = 1;
+    deConv = 0;
 end
 
-X = -29:90;
+if nargin < 6
+    deConv = 0;
+end
 
+if deConv == 0
+    X = -29:300;
+    sig = dF(nROI,:);
+else 
+    X = -29:300;
+    sig = getDeconv(dF(nROI,:));
+end
+
+nTrials = sum(selectionVec);
 f = trialVec.stimFrames(selectionVec);
-sEns=nan(length(f),120);
-for i=1:length(f)
-    sEns(i,:) = dF(nROI,f(i)+X);
+sEns=nan(nTrials,length(X));
+for i=1:nTrials
+    sEns(i,:) = sig(f{i}(1) + X);
 end
 
-sEns = bsxfun(@minus,sEns,mean(sEns(:,15:25),2));
+if deConv == 0
+    sEns = bsxfun(@minus,sEns,mean(sEns(:,15:25),2));
+end
 
 if showFig
     figure,plot(X/30,sEns'),

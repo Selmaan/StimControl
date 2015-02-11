@@ -1,7 +1,7 @@
 function hEl = dispStimROIs(StimROIs,ref)
 
 if nargin<2
-    ref = StimROIs.ref
+    ref = StimROIs.ref;
 end
 
 figure,imshow(ref)
