@@ -1,6 +1,6 @@
 function trialVec = vecTrials(stimExpt,frameRate)
 
-if ~exist('frameRate','var') | isempty(frameRate)
+if ~exist('frameRate','var') || isempty(frameRate)
     frameRate = 29.5475;
 end
 
@@ -22,5 +22,11 @@ for nTrial = 1:nTrials
     stimFrameDur = round(trialVec.dur(nTrial)*frameRate);
     stimFrameRepeats = (0:trialVec.nStim-1) * round(frameRate/trial.stimFreq);
     blankingFrames = bsxfun(@plus, repmat(stimFrameRepeats,stimFrameDur,1), (0:stimFrameDur-1)');
-    trialVec.stimFrames{nTrial} = nTrial * stimExpt.ITI + blankingFrames(:);
+    if isfield(stimExpt,'offsets')
+        offsetFrame = stimExpt.offsets(nTrial);
+    else
+        offsetFrame = 0;
+    end
+    trialVec.stimFrames{nTrial} = nTrial * stimExpt.ITI ...
+        + blankingFrames(:) + offsetFrame;
 end
