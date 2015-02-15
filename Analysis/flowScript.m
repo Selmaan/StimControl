@@ -15,7 +15,7 @@ tMin = tV.pockPulseFreq == 500;
 %% Exploration
 nROI = 5;
 nTarg = nROI;
-x = (-89:300)/30;
+x = (-299:300)/30;
 %sel = (tMax|tMed) & tV.nTarg == nTarg & tV.nRepeat < 21;
 sel = (tMed) & tV.nTarg == nTarg;
 s = getTrigStim(dF,tV,sel,nROI,0,0);

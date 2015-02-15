@@ -10,10 +10,10 @@ if nargin < 6
 end
 
 if deConv == 0
-    X = -89:300;
+    X = -299:300;
     sig = dF(nROI,:);
 else 
-    X = -89:300;
+    X = -299:300;
     sig = getDeconv(dF(nROI,:));
 end
 
@@ -25,7 +25,8 @@ for i=1:nTrials
 end
 
 if deConv == 0
-    sEns = bsxfun(@minus,sEns,mean(sEns(:,15:25),2));
+    ind = find(X>-11 & X<0);
+    sEns = bsxfun(@minus,sEns,mean(sEns(:,ind),2));
 end
 
 if showFig
