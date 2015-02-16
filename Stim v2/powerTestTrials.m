@@ -1,4 +1,4 @@
-frameRate = 29.5475;
+frameRate = hSI.scanFrameRate;
 framePeriod = 1/frameRate;
 trialParams = [];
 trialParams.sHz = sHz;
