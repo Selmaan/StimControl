@@ -4,9 +4,10 @@ StimROIs = [];
 roiSelector;
 %% Parameters
 sHz = 1e5;
-repeats = 2;
+repeats = 5;
 %% Generate Trials
-pockDutyTestTrials
+%pockDutyTestTrials
+powerTestTrials;
 %% Generate Experiment
 global stimExpt
 stimExpt = genExpt(StimROIs,trials,repeats,ITI);

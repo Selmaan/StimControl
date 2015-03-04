@@ -1,10 +1,10 @@
-framesOn = 10;
-ITI = 40;
+framesOn = 5;
+ITI = 60;
 frameRate = hSI.scanFrameRate;
 framePeriod = 1/frameRate;
 trialParams = [];
 trialParams.sHz = sHz;
-trialParams.stimFreq = 3;
+trialParams.stimFreq = frameRate/(framesOn+2);
 trialParams.nStim = 1;
 [~, stimParams] = genTrial(StimROIs,1,trialParams);
 stimParams.dur = framePeriod*framesOn;
@@ -27,6 +27,6 @@ stimThirteens.pockPulseFreq = stimParams.sHz/13;
 stimThirteens.pockPulseDuty = 1/13 * 100 - 1e-3; 
 
 trials = repTrials(StimROIs,trialParams,stimThirds);
-trials = repTrials(StimROIs,trialParams,stimMed,stimSixths);
-trials = repTrials(StimROIs,trialParams,stimMin,stimNinths);
-trials = repTrials(StimROIs,trialParams,stimMin,stimThirteens);
+trials = repTrials(StimROIs,trialParams,stimSixths,trials);
+trials = repTrials(StimROIs,trialParams,stimNinths,trials);
+trials = repTrials(StimROIs,trialParams,stimThirteens,trials);

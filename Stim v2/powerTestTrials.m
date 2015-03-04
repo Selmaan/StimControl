@@ -1,22 +1,26 @@
+framesOn = 10;
+ITI = 40;
 frameRate = hSI.scanFrameRate;
 framePeriod = 1/frameRate;
 trialParams = [];
 trialParams.sHz = sHz;
-trialParams.stimFreq = frameRate/3; %10
-trialParams.nStim = 10;
+trialParams.stimFreq = frameRate/(framesOn+2); %Ensure freq is slower than stim duration
+trialParams.nStim = 1;
 [~, stimParams] = genTrial(StimROIs,1,trialParams);
-stimParams.dur = framePeriod*2; % 60e-3
+stimParams.dur = framePeriod*framesOn;
 
-stimMax = stimParams;
-stimMin = stimParams;
-stimMed = stimParams;
+stimHalf = stimParams;
+stimHalf.pockPow = 0.85;
+stimQuarter = stimParams;
+stimQuarter.pockPow = 0.59;
+stimEigths = stimParams;
+stimEigths.pockPow = 0.38;
+stimSixteenths = stimParams;
+stimSixteenths.pockPow = 0.24;
 
-stimMin.pockPulseFreq = 1/2e-3; %2ms per line
-stimMin.pockPulseDuty = 15/512; %cell body approx 15 pix diameter in line scan
 
-stimMed.pockPulseFreq = 1e4;
-stimMed.pockPulseDuty = .2;
 
-trials = repTrials(StimROIs,trialParams,stimMax);
-trials = repTrials(StimROIs,trialParams,stimMed,trials);
-trials = repTrials(StimROIs,trialParams,stimMin,trials);
+trials = repTrials(StimROIs,trialParams,stimHalf);
+trials = repTrials(StimROIs,trialParams,stimQuarter,trials);
+trials = repTrials(StimROIs,trialParams,stimEigths,trials);
+trials = repTrials(StimROIs,trialParams,stimSixteenths,trials);
