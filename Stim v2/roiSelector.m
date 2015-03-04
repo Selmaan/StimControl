@@ -68,8 +68,10 @@ if isempty(StimROIs)
     [StimROIs.imData,StimROIs.imMeta] = tiffRead(StimROIs.imFile,'double');
     StimROIs.imZoom = StimROIs.imMeta.acq.zoomFactor;
     StimROIs.StimCentroids = genStimCentroids(StimROIs.imFile,0);
-    StimROIs.ref(:,:,1) = imadjust(StimROIs.imData(:,:,2)/2^14);
-    StimROIs.ref(:,:,2) = imadjust(StimROIs.imData(:,:,1)/2^14);
+    cRed = medfilt2(imNorm(StimROIs.imData(:,:,2)),[4 4]);
+    cGreen = medfilt2(imNorm(StimROIs.imData(:,:,1)),[4 4]);
+    StimROIs.ref(:,:,1) = adapthisteq(cRed);
+    StimROIs.ref(:,:,2) = adapthisteq(cGreen);
     StimROIs.ref(:,:,3) = 0;
     StimROIs.roi = [];
     redraw = 0;
