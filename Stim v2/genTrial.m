@@ -38,6 +38,7 @@ end
 
 trial = trialParams;
 trial.nTarg = nTarg;
+pBlankTime = 2e-3; %Time at start of trial for which pockels is blanked
 %% Generate stim signals and trial timing
 [stimSig,stimParams] = genStimSig(StimROIs.targ(nTarg), stimParams);
 
@@ -46,6 +47,7 @@ trialSamples = ceil(trial.dur * trialParams.sHz);
 stimSamples = length(stimSig.xSig);
 stimSpacing = 0 : 1/trial.stimFreq : (trial.nStim-1)/trial.stimFreq;
 stimTimes = round(stimSpacing * trialParams.sHz + 1);
+pBlankOff = pBlankTime*trialParams.sHz;
 
 %% Create trial signals
 
@@ -60,12 +62,13 @@ for nStim = 1:trialParams.nStim
     xSig(ind) = stimSig.xSig;
     ySig(ind) = stimSig.ySig;
     pSig(ind) = stimSig.pockSig;
+    pSig(1:pBlankOff) = 0;
 end
 
-%Append signals to set laser pockels-blanked and parked on cell at trial end
+%Append signals to pockels-blank laser and park outside FOV at trial end
 trial.offset = StimROIs.targ(nTarg).offset;
-xSig(end+1) = trial.offset(1);
-ySig(end+1) = trial.offset(2);
+xSig(end+1) = 4;
+ySig(end+1) = 4;
 pSig(end+1) = 0;
 
 %Reposition mirrors at cell center and blank laser w/ pockels btw stims
