@@ -13,6 +13,8 @@ zoomLvl = imMeta.acq.zoomFactor;
 % calibrated w/ stim path on 
 % Feb 2 2015 to correspond to ~12um
 % March 29 2015 changed to smaller value for 16x objective
+cellDiam = 11.7 * zoomLvl; %25x
+%cellDiam = 7.5 * zoomLvl; %16x
 % Filter red image
 im = imDual(:,:,2);
 imFilt = medfilt2(im,[1 1]*round(cellDiam/3),'symmetric');
