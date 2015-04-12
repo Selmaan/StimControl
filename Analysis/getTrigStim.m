@@ -10,10 +10,10 @@ if nargin < 6
 end
 
 if deConv == 0
-    X = -240:300;
+    X = -299:300;
     sig = dF(nROI,:);
 else 
-    X = -240:300;
+    X = -299:300;
     sig = getDeconv(dF(nROI,:));
 end
 
