@@ -7,7 +7,6 @@ save('temp','StimROIs')
 sHz = 1e5;
 repeats = 20;
 %% Generate Trials
-%pockDutyTestTrials
 targetTestTrials;
 %% Generate Experiment
 global stimExpt

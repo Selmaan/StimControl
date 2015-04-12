@@ -19,10 +19,11 @@ t9 = tV.pockPulseFreq == (1e5/9);
 t13 = tV.pockPulseFreq == (1e5/13);
 
 %% Exploration
-nROI = 62;
+nROI = 4;
 nTarg = nROI;
-sel = (t6) & tV.nTarg == nTarg;
-x = (-299:300)/30;
+x = (-240:300)/30;
+%sel = (tMax|tMed) & tV.nTarg == nTarg & tV.nRepeat < 21;
+sel = (tMed) & tV.nTarg == nTarg;
 s = getTrigStim(dF,tV,sel,nROI,0,0);
 c = jet(size(s,1));
 figure(1),clf, hold on

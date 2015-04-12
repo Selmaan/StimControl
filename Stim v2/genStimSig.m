@@ -74,9 +74,15 @@ sigs.pockSig = stimParams.pockPow*ones(nSamples,1);
 
 % Create pulsed pockels signal if a positive frequency is specified
 if stimParams.pockPulseFreq > 0
-    t = reshape(1/stimParams.sHz:1/stimParams.sHz:stimParams.dur,[],1);
-    pulseTimeBase = t .* (2*pi * stimParams.pockPulseFreq);
-    pockPulse = square(pulseTimeBase,stimParams.pockPulseDuty);
-    sigs.pockSig = sigs.pockSig .* pockPulse;
-    sigs.pockSig(sigs.pockSig<0) = 0;
+%     t = reshape(1/stimParams.sHz:1/stimParams.sHz:stimParams.dur,[],1);
+%     pulseTimeBase = t .* (2*pi * stimParams.pockPulseFreq);
+%     pockPulse = square(pulseTimeBase,stimParams.pockPulseDuty);
+%     sigs.pockSig = sigs.pockSig .* pockPulse;
+%     sigs.pockSig(sigs.pockSig<0) = 0;
+      pulseCycle = round(100/stimParams.pockPulseDuty);
+      pulseBase = zeros(pulseCycle,1);
+      pulseBase(1) = 1;
+      sigLength = length(sigs.pockSig);
+      pockPulse = repmat(pulseBase,ceil(sigLength/pulseCycle),1);
+      sigs.pockSig = sigs.pockSig .* pockPulse(1:sigLength);
 end
