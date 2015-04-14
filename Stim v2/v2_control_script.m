@@ -5,7 +5,7 @@ roiSelector;
 %% Parameters
 save('temp','StimROIs')
 sHz = 1e5;
-repeats = 20;
+repeats = 15;
 %% Generate Trials
 targetTestTrials;
 %% Generate Experiment
