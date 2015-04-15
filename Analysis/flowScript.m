@@ -23,6 +23,7 @@ nROI = 1;
 % xShift = [median(s.x];
 % yShift = [s.y];
 %% Exploration
+<<<<<<< HEAD
 % gROI = gROI + 1;
 % nROI = gNeur(gROI),
 nROI = nROI + 1,
