@@ -1,76 +1,70 @@
 %% Selection
-stimExpt = catStimExpt(fNames,framesPerExpt);
-ref = meanRef(rFOV1);ref(isnan(ref)) = 0;ref = sqrt(ref);
-load('C:\Users\Selmaan\Documents\MATLAB\r2s.mat'),
-ref = imresize(ref,1.4);
-sReg = imwarp(ref,r2s,'OutputView',imref2d(size(ref)));
+% for i=1:6
+%     fNames{i} = ['E:\Data\Coexpression Tests\SCc61\15_04_06\'...
+%     sprintf('rFOV1_expt1_%03.0f_010.mat',i)];
+% end
+% framesPerExpt = 10e3;
+% stimExpt = catStimExpt(fNames,framesPerExpt);
+ref = meanRef(rFOV1); %ref = imresize(ref,2);
+ref(isnan(ref)) = 0; ref(ref<0) = 0;
+ref = sqrt(ref);
+load('C:\Users\Selmaan\Documents\MATLAB\r2s_16x.mat'),
+sReg = imwarp(imresize(ref,1.4),r2s,'OutputView',imref2d(size(ref)));
 tV = vecTrials(stimExpt);
 exF = reshape([tV.stimFrames{:}],1,[]);
 selectROIs(rFOV1,[],[],[],[],exF);
-hEl = dispStimROIs(stimExpt.StimROIs,adapthisteq(imNorm(sRef)));
+hEl = dispStimROIs(stimExpt.StimROIs,adapthisteq(imNorm(sReg)));
 hEl2 = dispStimROIs(stimExpt.StimROIs);
 nROI = 1;
-[t1, t2] = blinkROI;
+[tOff, tOn, tOff2, tOn2] = blinkROI;
 
 %% Selection Vectors
-t3 = tV.pockPulseFreq == (1e5/3);
-t6 = tV.pockPulseFreq == (1e5/6);
-t9 = tV.pockPulseFreq == (1e5/9);
-t13 = tV.pockPulseFreq == (1e5/13);
-
+% s = [rFOV1.shifts.slice];
+% xShift = [median(s.x];
+% yShift = [s.y];
 %% Exploration
-nROI = 62;
+% gROI = gROI + 1;
+% nROI = gNeur(gROI),
+nROI = nROI + 1,
 nTarg = nROI;
-sel = (t6) & tV.nTarg == nTarg;
-x = (-299:300)/30;
-s = getTrigStim(dF,tV,sel,nROI,0,0);
-c = jet(size(s,1));
-figure(1),clf, hold on
-for i=1:size(s,1)
-    plot(x,s(i,:),'color',c(i,:))
-end
-axis tight
-sD = getTrigStim(dF,tV,sel,nROI,0,1) * 30;
-figure(2),clf,imagesc(x,1:size(sD,1),matConv(sD,3))
-figure(3),clf,plot(x,mean(sD),'k'),
-hold on,plot(x,median(matConv(sD,3)),'r','linewidth',2)
-plot(x,mean(matConv(sD,3)),'g','linewidth',2)
-axis tight,
-
-figure(4),clf
-cMap = flipud(parula(6));
-trialConds = cat(1,t3,t6,t9,t13);
-plot(dF(nROI,:),'k'),hold on,
-allSel = tV.nTarg == nTarg;
-for trial = find(allSel)
-    stimFrame = tV.stimFrames{trial}(1);
-    trialCond = find(trialConds(:,trial))+1;
-    plot(stimFrame+15,dF(nROI,stimFrame+15),'.','markersize',25,...
-        'color',cMap(trialCond,:)),
-end
-for trial = find(sel)
-    stimFrame = tV.stimFrames{trial}(1);
-    plot(stimFrame+15,dF(nROI,stimFrame+15),'r*','markersize',10),
-end
+flowScript_exploration;
 %% Automation / extra analyses
-% zdF = zscore(dF')';
-% for trial = 1:length(tV.stimFrames)
-%     dfStim(:,trial) = mean(zdF(:,tV.stimFrames{trial}(1)+10:tV.stimFrames{trial}(1)+20),2)...
-%         -mean(zdF(:,tV.stimFrames{trial}(1)-11:tV.stimFrames{trial}(1)-1),2);
-% end
-% for trial = 1:length(tV.stimFrames)
-%     stimOn = tV.stimFrames{trial};
-%     deStim(:,trial) = mean(de(:,stimOn:stimOn+11),2);
-% end
+flowScript_population;
+stimMag = mean(repStim(:,1:10),2);
+%goodNeur = find(stimMag>prctile(stimMag,25));
+goodNeur = find(stimMag>.2);
+figure,imagesc(corrcoef(repStim(goodNeur,:))-eye(size(repStim,2)))
+figure,plot(repStim(goodNeur,:)'),hold on,plot(mean(repStim(goodNeur,:)),'k','linewidth',2)
+respMat = mean(pkStim,3); figure,imagesc(respMat)
+figure,plot(distMat(:)*300/512,respMat(:),'.')
 
-% resp = [];
-% for nTarg = 1:size(deStim,1)
-%     sel = (tV.nTarg == nTarg);
-%     resp(:,nTarg) = median(dfStim(:,sel),2);
-% end
-% figure,imagesc(resp)
+%% GLM fit
+nFit = 6;
+sel = find(tV.nTarg == nFit);
+predMat = nan(size(de,1),length(tV.nTarg));
+for n=1:size(de,1)
+    predMat(n,:) = tV.nTarg == n;
+end
+predMat(end+1,:) = linspace(0,1,length(tV.nTarg));
+predMat(end+1,:) = 0;
+resp = nan(length(tV.stimFrames),1);
+for i=1:length(tV.stimFrames)
+    respFrames = tV.stimFrames{i}(1):10+tV.stimFrames{i}(1);
+    resp(i) = sum(de(nFit,respFrames));
+    lastStim = find(sel<i,1,'last');
+    if ~isempty(lastStim)
+        predMat(end,i) = exp(sel(lastStim)-i);
+    end
+end
 
+display('Fitting...'),
+[B,fitinfo] = lassoglm(predMat',resp,'poisson','CV',6);
+lassoPlot(B,fitinfo,'plottype','CV');
+lassoPlot(B,fitinfo,'PlotType','Lambda','XScale','log');
+figure,plot(distMat(:,nFit),B(1:end-2,fitinfo.IndexMinDeviance),'.')
+B(end-1:end,fitinfo.IndexMinDeviance),
 
+%% Archive
 % resp = [];
 % for nROI = 1:43
 %     nTarg = nROI;
@@ -97,3 +91,19 @@ end
 %     s9(:,:,i) = getTrigStim(dF,tV,sel & t9,nROI,0,0);
 %     s13(:,:,i) = getTrigStim(dF,tV,sel & t13,nROI,0,0);
 % end
+% s2=[];s4=[];s8=[];s16=[];
+% for i = 1:length(g)
+%     iTarg = g(i);
+%     nROI = iTarg;nTarg = iTarg;
+%     sel = tV.nTarg == nTarg;
+%     s2(:,:,i) = getTrigStim(dF,tV,sel & t2,nROI,0,0);
+%     s4(:,:,i) = getTrigStim(dF,tV,sel & t4,nROI,0,0);
+%     s8(:,:,i) = getTrigStim(dF,tV,sel & t8,nROI,0,0);
+%     s16(:,:,i) = getTrigStim(dF,tV,sel & t16,nROI,0,0);
+% end
+% 
+% figure,hold on,
+% plot(max(mean(s2,3),[],2))
+% plot(max(mean(s4,3),[],2))
+% plot(max(mean(s8,3),[],2))
+% plot(max(mean(s16,3),[],2))
