@@ -4,10 +4,6 @@ taskName = 'Frame Clock Divider';
 
 switch evt.EventName
         case 'seqStimStart'
-            m = dabs.ni.daqmx.Task.getTaskMap;
-            try
-                delete(m(taskName)),
-            end
             
             stimBoardID = 'ExtGalvoUSB';
             ctrChanID = 3;
@@ -17,7 +13,7 @@ switch evt.EventName
             highTicks = ceil(frameInterval/2);
             initialDelay = frameInterval;
 
-            fCtr = dabs.ni.daqmx.Task(taskName);
+            fCtr = most.util.safeCreateTask(taskName);
             fCtrChan = fCtr.createCOPulseChanTicks(stimBoardID,ctrChanID,taskName,...
                 frameClockSrcTerm, lowTicks, highTicks, initialDelay);
             fCtr.cfgImplicitTiming('DAQmx_Val_ContSamps');
