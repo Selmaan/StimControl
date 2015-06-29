@@ -7,11 +7,11 @@ function [xx,yy] = beatFreqSpiral(tt,varargin)
 inputs = scanimage.mroi.util.parseInputs(varargin);
 
 % add optional parameters
-if ~isfield(inputs,'oscFreq') || isempty(inputs.myparameter1)
+if ~isfield(inputs,'oscFreq') || isempty(inputs.oscFreq)
    inputs.oscFreq = 1e3; % standard value for myparameter1
 end
 
-if ~isfield(inputs,'ampFreq') || isempty(inputs.myparameter2)
+if ~isfield(inputs,'ampFreq') || isempty(inputs.ampFreq)
    inputs.ampFreq = inputs.oscFreq / (2*pi-2/3); % standard value for myparameter2
 end
 
