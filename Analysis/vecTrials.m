@@ -1,7 +1,7 @@
 function trialVec = vecTrials(stimExpt,frameRate)
 
 if ~exist('frameRate','var') || isempty(frameRate)
-    frameRate = 29.5475;
+    frameRate = 29.55;
 end
 
 nTrials = numel(stimExpt.trialOrder);

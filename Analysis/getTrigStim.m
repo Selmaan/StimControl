@@ -9,12 +9,17 @@ if nargin < 6
     deConv = 0;
 end
 
+subBaseline = 1;
 if deConv == 0
     X = -299:300;
     sig = dF(nROI,:);
-else 
+elseif deConv == 1 
     X = -299:300;
     sig = getDeconv(dF(nROI,:));
+elseif deConv == 2
+    X = -299:300;
+    sig = dF(nROI,:);
+    subBaseline = 0;
 end
 
 nTrials = sum(selectionVec);
@@ -29,7 +34,7 @@ for i=1:nTrials
     end
 end
 
-if deConv == 0
+if deConv == 0 && subBaseline
     ind = find(X>-11 & X<0);
     sEns = bsxfun(@minus,sEns,mean(sEns(:,ind),2));
 end
