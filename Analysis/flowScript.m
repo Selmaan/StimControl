@@ -56,8 +56,6 @@ end
 save('trace + stim','dF','de','tV','t','r','roi','pil','xShift','yShift','stimExpt')
 
 %% Exploration
-% gROI = gROI + 1;
-% nROI = gNeur(gROI),
 nROI = nROI + 1,
 nTarg = nROI;
 flowScript_exploration;
