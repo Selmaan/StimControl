@@ -29,7 +29,7 @@ for i=1:length(baseRoiGroup.rois)
         hRoiGroup.name = sprintf('Cell %d',length(listCellIDs));
         hRoi = scanimage.mroi.Roi();
         hRoi.add(0,baseRoiGroup.rois(i).scanfields(1));
-        hRoi.scanfields.stimfcnhdl = @beatFreqSpiral;
+        hRoi.scanfields.stimfcnhdl = @scanimage.mroi.stimulusfunctions.beatFreqSpiral;
         hRoi.scanfields.duration = 90e-3;
         hRoi.scanfields.scalingXY = [.02 .02];
         hRoiGroup.add(hPauseRoi);
