@@ -31,7 +31,7 @@ for i=1:length(baseRoiGroup.rois)
         hRoi.add(0,baseRoiGroup.rois(i).scanfields(1));
         hRoi.scanfields.stimfcnhdl = @scanimage.mroi.stimulusfunctions.beatFreqSpiral;
         hRoi.scanfields.duration = 90e-3;
-        hRoi.scanfields.scalingXY = [.02 .02];
+        %hRoi.scanfields.scalingXY = [.02 .02];
         hRoiGroup.add(hPauseRoi);
         hRoiGroup.add(hRoi);
         hRoiGroup.add(hParkRoi);
