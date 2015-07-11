@@ -1,3 +1,4 @@
+hSI = evalin('base','hSI');
 %% Create 
 %Stop photostim
 hSI.hPhotostim.abort();
@@ -5,6 +6,9 @@ hSI.hPhotostim.abort();
 %assign First Group as Master, clear rest
 baseRoiGroup = hSI.hPhotostim.stimRoiGroups(1);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % explicitly delete RoiGroups and Rois
 % don't delete scanfields, since they are defined in the baseRoiGroup
 arrayfun(@(hRoiGroup)delete(hRoiGroup.rois),hSI.hPhotostim.stimRoiGroups(2:end));
@@ -16,6 +20,9 @@ hSI.hPhotostim.stimRoiGroups(2:end) = [];
 % by generating the output just for the first RoiGroup
 hSI.hPhotostim.sequenceSelectedStimuli = 1;
 hSI.hPhotostim.generateAO();
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Initialize structure
 tic,
@@ -40,10 +47,9 @@ for i=1:length(baseRoiGroup.rois)
         hRoiGroup.name = sprintf('Cell %d',length(listCellIDs));
         hRoi = scanimage.mroi.Roi();
         hRoi.add(0,baseRoiGroup.rois(i).scanfields(1));
-        hRoi.scanfields.stimfcnhdl = @scanimage.mroi.stimulusfunctions.beatFreqSpiral;
-        hRoi.scanfields.duration = 60e-3;
-        hRoi.scanfields.powers = 50;
-        hRoi.scanfields.scalingXY = [0.0075 0.0075];
+        hRoi.scanfields.stimfcnhdl = @scanimage.mroi.stimulusfunctions.logspiral;
+        hRoi.scanfields.duration = 90e-3;
+        hRoi.scanfields.scalingXY = [.02 .02];
         hRoiGroup.add(hPauseRoi);
         hRoiGroup.add(hRoi);
         hRoiGroup.add(hParkRoi);
@@ -55,7 +61,7 @@ end
 hSI.hPhotostim.stimRoiGroups = horzcat(hSI.hPhotostim.stimRoiGroups,roiGroups);
 toc,
 %% Create Permutation Order
-numPermutations = 10;
+numPermutations = 300;
 
 % Generate permutation order
 allPerm = nan(length(listCellIDs),numPermutations);
