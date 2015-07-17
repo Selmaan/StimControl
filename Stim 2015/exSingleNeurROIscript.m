@@ -2,6 +2,9 @@
 %Stop photostim
 hSI.hPhotostim.abort();
 
+tic,
+fprintf('Generating RoiGroups...\n');
+
 %assign First Group as Master, clear rest
 baseRoiGroup = hSI.hPhotostim.stimRoiGroups(1);
 
@@ -18,8 +21,6 @@ hSI.hPhotostim.sequenceSelectedStimuli = 1;
 hSI.hPhotostim.generateAO();
 
 % Initialize structure
-tic,
-fprintf('Generating RoiGroups...\n');
 roiGroups = scanimage.mroi.RoiGroup.empty(0,1);
 
 % Create default pause and park rois
@@ -42,7 +43,7 @@ for i=1:length(baseRoiGroup.rois)
         hRoi.add(0,baseRoiGroup.rois(i).scanfields(1));
         hRoi.scanfields.stimfcnhdl = @scanimage.mroi.stimulusfunctions.beatFreqSpiral;
         hRoi.scanfields.duration = 60e-3;
-        hRoi.scanfields.powers = 50;
+        hRoi.scanfields.powers = 33;
         hRoi.scanfields.scalingXY = [0.0075 0.0075];
         hRoiGroup.add(hPauseRoi);
         hRoiGroup.add(hRoi);
@@ -55,7 +56,7 @@ end
 hSI.hPhotostim.stimRoiGroups = horzcat(hSI.hPhotostim.stimRoiGroups,roiGroups);
 toc,
 %% Create Permutation Order
-numPermutations = 10;
+numPermutations = 15;
 
 % Generate permutation order
 allPerm = nan(length(listCellIDs),numPermutations);
@@ -69,6 +70,8 @@ listPermSeq = allPerm(:)';
 hSI.hPhotostim.stimulusMode = 'sequence';
 hSI.hPhotostim.sequenceSelectedStimuli = ...
     listPermSeq + 1;
+header.SI.hPhotostim.stimImmediately = 0;
+header.SI.hPhotostim.numSequences = 1;
 
 %% Start photostim
 tic,

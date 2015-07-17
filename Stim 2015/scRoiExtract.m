@@ -33,12 +33,12 @@ for i=1:3
     xEst(3)=fminbnd(objFunOffset,0,nPoints);
 end
 boundInd = xEst(3) + xEst(1)*cos(xEst(2)+linspace(0, 2*pi, nRays));
-% figure,imagesc(ray),
-% hold on, plot(boundInd,'r'),
+%figure,imagesc(ray),
+%hold on, plot(boundInd,'r'),
 
 outerBound = nPoints+1;
 [xCo,yCo] = pol2cart(theta,outerBound-boundInd+1);
 borderXY(1,:) = xCo + desiredPoint(1);
 borderXY(2,:) = yCo + desiredPoint(2);
-% figure,imagesc(img),
-% hold on, plot(yCo+centroid(1),xCo+centroid(2),'r')
+%figure,imagesc(img),
+%hold on, plot(yCo+centroid(1),xCo+centroid(2),'r')
