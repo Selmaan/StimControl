@@ -1,30 +1,45 @@
-%% Formatting
-% for i=1:6
-%     fNames{i} = ['E:\Data\Coexpression Tests\SCc61\15_04_06\'...
-%     sprintf('rFOV1_expt1_%03.0f_010.mat',i)];
-% end
-% framesPerExpt = 10e3;
-% stimExpt = catStimExpt(fNames,framesPerExpt);
-% 
-stimExpt.StimROIs.roi = [sA.StimROIs.roi, sB.StimROIs.roi];
-stimExpt.StimROIs.targ = [sA.StimROIs.targ, sB.StimROIs.targ];
-stimExpt.trials = [sA.trials, sB.trials];
-stimExpt.trialOrder = [sA.trialOrder,sB.trialOrder+24];
-stimExpt.offsets = [zeros(1,numel(sA.trialOrder)),ones(1,numel(sB.trialOrder))*2e3]
+%% PreProcessing
 
+fnRes = 'E:\Data\SomaLocalized\c78\15_07_17\expt1_00001_00001.tif';
+fnLin = 'E:\Data\SomaLocalized\c78\15_07_17\sFOV1_2.tif';
+
+temp2015alignment,
+
+figure(7),imshow(imNorm(resWarp),resWarpRA),hold on,
+figure(8),imshow(imNorm(rLinWarp),rLinWarpRA),hold on,
 
 %% Selection
-ref = meanRef(rFOV1); %ref = imresize(ref,2);
-ref(isnan(ref)) = 0; ref(ref<0) = 0;
-load('C:\Users\Selmaan\Documents\MATLAB\r2s_25x.mat'),
-sReg = imwarp(imresize(ref,1.4),r2s,'OutputView',imref2d(size(ref)));
-tV = vecTrials(stimExpt);
-exF = reshape([tV.stimFrames{:}],1,[]);
-selectROIs(rFOV1,[],[],[],[],exF);
-hEl = dispStimROIs(stimExpt.StimROIs,adapthisteq(imNorm(sReg)));
-hEl2 = dispStimROIs(stimExpt.StimROIs);
-nROI = 1;
-[tOff, tOn, tOff2, tOn2] = blinkROI;
+ITI = header.SI.hUserFunctions.userFunctionsCfg__1.Arguments{1};
+stimOrder = header.SI.hPhotostim.sequenceSelectedStimuli-1;
+stimFrameDur = round(stimGroups(end).rois(2).scanfields.duration/30e-3);
+exF = ITI:ITI:ITI*length(stimOrder);
+for i=2:stimFrameDur
+    exF(i,:) = exF(1,:)+(i-1);
+end
+exF = exF(:);
+selectROIs(expt1,[],[],[],[],exF);
+
+nROI = 0;
+%% Highlight next ROI
+if nROI>0
+    figure(7),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'k+','markersize',10),
+    figure(8),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'k+','markersize',10),
+end
+    nROI = nROI + 1,
+figure(7),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'r+','markersize',10),
+figure(8),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'r+','markersize',10),
+
+% ref = meanRef(rFOV1); %ref = imresize(ref,2);
+% ref(isnan(ref)) = 0; ref(ref<0) = 0;
+% load('C:\Users\Selmaan\Documents\MATLAB\r2s_25x.mat'),
+% sReg = imwarp(imresize(ref,1.4),r2s,'OutputView',imref2d(size(ref)));
+% tV = vecTrials(stimExpt);
+% exF = reshape([tV.stimFrames{:}],1,[]);
+% selectROIs(rFOV1,[],[],[],[],exF);
+% hEl = dispStimROIs(stimExpt.StimROIs,adapthisteq(imNorm(sReg)));
+% hEl2 = dispStimROIs(stimExpt.StimROIs);
+% nROI = 1;
+% [tOff, tOn, tOff2, tOn2] = blinkROI;
 
 %% save ROI info
 cd(rFOV1.defaultDir),
