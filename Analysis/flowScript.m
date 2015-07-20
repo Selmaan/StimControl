@@ -16,6 +16,10 @@ exF = ITI:ITI:ITI*length(stimOrder);
 for i=2:stimFrameDur
     exF(i,:) = exF(1,:)+(i-1);
 end
+for i=1:length(stimOrder)
+    tV.nTarg(i) = stimOrder(i);
+    tV.stimFrames{i} = exF(:,i);
+end
 exF = exF(:);
 selectROIs(expt1,[],[],[],[],exF);
 
@@ -42,9 +46,9 @@ figure(8),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'r+','markersize',10),
 % [tOff, tOn, tOff2, tOn2] = blinkROI;
 
 %% save ROI info
-cd(rFOV1.defaultDir),
-rFOV1.save
-[dF,t,r,roi,pil] = extractROIsBin(rFOV1);
+cd(expt1.defaultDir),
+expt1.save
+[dF,t,r,roi,pil] = extractROIsBin(expt1);
 for i=1:length(tV.stimFrames)
     stimFrame = tV.stimFrames{i};
     blankVal = dF(:,stimFrame(1)-1)/2+dF(:,stimFrame(end)+1)/2;
@@ -57,7 +61,7 @@ for i=1:size(dF,1)
     de(i,:) = getDeconv(dF(i,:));
 end
 
-allShifts = [rFOV1.shifts.slice];
+allShifts = [expt1.shifts.slice];
 xShift = [];
 yShift = [];
 for i = 1:length(allShifts)
@@ -68,7 +72,7 @@ for i = 1:length(allShifts)
     yShift = cat(1,yShift,y);
 end
     
-save('trace + stim','dF','de','tV','t','r','roi','pil','xShift','yShift','stimExpt')
+save('trace + stim','dF','tV','de','t','r','roi','pil','xShift','yShift')
 
 %% Exploration
 nROI = nROI + 1,
@@ -76,9 +80,10 @@ nTarg = nROI;
 flowScript_exploration;
 %% Automation / extra analyses
 flowScript_population;
+distMat = distMat/rLinWarpRA.ImageExtentInWorldX*500;
 stimMag = median(repStim(:,1:10),2);
 %goodNeur = find(stimMag>prctile(stimMag,25));
-goodNeur = find(stimMag>.1);
+goodNeur = find([expt1.roiInfo.slice.roi.group]==1);
 figure,imagesc(corrcoef(repStim(goodNeur,:))-eye(size(repStim,2)))
 figure,plot(repStim(goodNeur,:)'),hold on,plot(mean(repStim(goodNeur,:)),'k','linewidth',2)
 respMat = mean(pkStim,3); figure,imagesc(respMat)
@@ -110,6 +115,9 @@ ecdf(respMatG(d60))
 ecdf(respMatG(d90))
 ecdf(respMatG(d120))
 ecdf(respMatG(dLarge))
+
+
+
 %% Sparse Exp Analysis
 figure,boxplot(stimMag,[roi.group]),
 nonExp = find([roi.group]>3);
