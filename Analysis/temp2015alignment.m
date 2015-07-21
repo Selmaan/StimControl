@@ -25,7 +25,7 @@ resRA = imref2d([512 512],[min(xs) max(xs)],[min(ys) max(ys)]);
 
 %% Correct Resonant coordinates to fit with linear
 
-load('SI2015_align'),
+load('C:\Users\Selmaan\Documents\GitHub\StimControl\Analysis\SI2015_align'),
 res2lin = invert(lin2res);
 [resWarp,resWarpRA] = imwarp(gRes,resRA,res2lin);
 %% Read in ROI positions

@@ -116,8 +116,35 @@ ecdf(respMatG(d90))
 ecdf(respMatG(d120))
 ecdf(respMatG(dLarge))
 
+%% Expression level analysis
+% roiMask = zeros(512);
+% roiInfo = expt1.roiInfo.slice.roi;
+% for i=1:length(roiInfo)
+%     roiMask(roi(i).indBody) = i;
+% end
+% roiWarp = imwarp(roiMask,resRA,res2lin);
+% figure,imshowpair(imNorm(resWarp),resWarpRA,roiWarp>0,resWarpRA),
+% figure,imshowpair(imNorm(rLinWarp),rLinWarpRA,roiWarp>0,resWarpRA),
+% roiFuse = imfuse(rLinWarp/1e3,rLinWarpRA,roiWarp/1e3,resWarpRA);
+roiMask = zeros(512);
+roiSizes = [0.0075 0.0075];
+figure,imshow(imNorm(rLinWarp),rLinWarpRA),
+for i=1:size(roiCentroid,1)
+    roiLoc = roiCentroid(i,:);
+    roiSize = roiSizes;
+    h = imellipse(gca,[roiLoc-roiSize 2*roiSize]);
+    m = createMask(h);
+    expLvl(i) = mean(rLinWarp(m));
+    %delete(h),
+end
+clear m
 
-
+figure,plot(expLvl,stimMag,'.','markersize',10)
+xlabel('C1V1 Expression'),
+ylabel('Response Spikes'),
+figure,plot(expLvl(goodNeur),stimMag(goodNeur),'.','markersize',10)
+xlabel('C1V1 Expression'),
+ylabel('Response Spikes'),
 %% Sparse Exp Analysis
 figure,boxplot(stimMag,[roi.group]),
 nonExp = find([roi.group]>3);
