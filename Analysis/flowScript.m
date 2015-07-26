@@ -1,12 +1,13 @@
 %% PreProcessing
 
-fnRes = 'E:\Data\SomaLocalized\c78\15_07_17\expt1_00001_00001.tif';
-fnLin = 'E:\Data\SomaLocalized\c78\15_07_17\sFOV1_2.tif';
+baseDir = 'Z:\HarveyLab\Selmaan\SomaLocalized\c78\15_07_24';
+fnRes = [baseDir '\expt2_00001_00001.tif'];
+fnLin = [baseDir, '\stimFOV2_1.tif'];
 
 temp2015alignment,
 
 figure(7),imshow(imNorm(resWarp),resWarpRA),hold on,
-figure(8),imshow(imNorm(rLinWarp),rLinWarpRA),hold on,
+figure(8),imshow(imNorm(rLin),linRA),hold on,
 
 %% Selection
 ITI = header.SI.hUserFunctions.userFunctionsCfg__1.Arguments{1};

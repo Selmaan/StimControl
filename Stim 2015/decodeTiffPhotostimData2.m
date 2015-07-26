@@ -21,26 +21,16 @@ assert(length(hRoiGroup.rois) == 1 && length(hRoiGroup.rois.scanfields) == 1,'Ti
 
 scanfield = hRoiGroup.rois(1).scanfields(1);
 
-switch header.SI.imagingSystem
-    case 'Resonant'
-        scannerToRefTransform = header.SI.hResScan.scannerToRefTransform;
-    case 'Linear'
-        scannerToRefTransform = header.SI.hLinScan.scannerToRefTransform;
-    otherwise
-        error('Unknown imaging system: %s',header.SI.imagingSystem);
-end
+xres = scanfield.pixelResolution(1);
+yres = scanfield.pixelResolution(2);
 
-% corner virtices of image in scanfield coordinates
-xs = [ 0 1 1 0 ];
-ys = [ 0 0 1 1 ]; 
+% the image extends from 0 to 1 (x and y) in scannfield coordinates
+% generate center coordinates for each pixel in scanfield coordinates
+[xs,ys] = meshgrid( (1/xres)/2 : 1/xres : 1-(1/xres)/2 ,...
+                    (1/yres)/2 : 1/yres : 1-(1/yres)/2 );
 
-% transform to scanner coordinates
+% transform pixel centers from scanfield coordinates to reference coordinates
 [xs,ys] = scanfield.transform(xs,ys);
-
-% transform to reference coordinates
-c = scannerToRefTransform * [xs;ys;ones(size(xs))];
-xs = c(1,:);
-ys = c(2,:);
 tiftimeseries = header.frameTimestamps;
 
 %% get photostim geometry
