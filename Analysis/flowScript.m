@@ -11,17 +11,7 @@ figure(7),imshow(imNorm(resRef),resRefRA),hold on,
 figure(8),imshow(imNorm(rLin),linRA),hold on,
 
 %% Selection
-ITI = header.SI.hUserFunctions.userFunctionsCfg__1.Arguments{1};
-stimOrder = header.SI.hPhotostim.sequenceSelectedStimuli-1;
-stimFrameDur = round(stimGroups(end).rois(2).scanfields.duration/30e-3);
-exF = ITI:ITI:ITI*length(stimOrder);
-for i=2:stimFrameDur
-    exF(i,:) = exF(1,:)+(i-1);
-end
-for i=1:length(stimOrder)
-    tV.nTarg(i) = stimOrder(i);
-    tV.stimFrames{i} = exF(:,i);
-end
+getStimFrames,
 exF = exF(:);
 selectROIs(expt1,[],[],[],[],exF);
 
@@ -51,36 +41,39 @@ figure(8),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'r+','markersize',10),
 cd(expt1.defaultDir),
 expt1.save
 [dF,t,r,roi,pil] = extractROIsBin(expt1);
-for i=1:length(tV.stimFrames)
-    stimFrame = tV.stimFrames{i};
-    preVals = dF(:,stimFrame(1)-1);
-    postVals = dF(:,stimFrame(end)+1);
-    interpDenom = length(stimFrame) + 1;
-    for frameInd = 1:length(stimFrame)
-        dF(:,stimFrame(frameInd)) = (interpDenom-frameInd)/interpDenom * preVals ...
-            + frameInd/interpDenom * postVals;
-    end
-end
 
+interpStimDF,
+
+cDe = nan(size(dF));
 de = nan(size(dF));
 for nNeur=1:size(dF,1)
     nNeur,
-    de(nNeur,:) = getDeconv(dF(nNeur,:));
+    y=dF(nNeur,:);
+    px = prctile(y,5):1e-3:prctile(y,95);
+    py = ksdensity(y,px);
+    [~,pi] = max(py);
+    by = px(pi),
+    yCorr = y-by;
+    [cDe(nNeur,:),bAll(nNeur),c1All(nNeur),gAll(nNeur,:),snAll(nNeur),de(nNeur,:)]...
+        = constrained_foopsi(yCorr);
+    cResid(nNeur,:) = xcov(yCorr-(bAll(nNeur)+cDe(nNeur,:)),1e3,'coef');
+    pM = max(impulseAR(gAll(nNeur,:)));
+    de(nNeur,:) = de(nNeur,:)*pM*10;
 end
 
-allShifts = [expt1.shifts.slice];
-xShift = [];
-yShift = [];
-for nMov = 1:length(allShifts)
-    nMov,
-    x = squeeze(mean(reshape(allShifts(nMov).x(),[],1,1e3)));
-    y = squeeze(mean(reshape(allShifts(nMov).y(),[],1,1e3)));
-    xShift = cat(1,xShift,x);
-    yShift = cat(1,yShift,y);
-end
+% allShifts = [expt1.shifts.slice];
+% xShift = [];
+% yShift = [];
+% for nMov = 1:length(allShifts)
+%     nMov,
+%     x = squeeze(mean(reshape(allShifts(nMov).x(),[],1,1e3)));
+%     y = squeeze(mean(reshape(allShifts(nMov).y(),[],1,1e3)));
+%     xShift = cat(1,xShift,x);
+%     yShift = cat(1,yShift,y);
+% end
     
-save('trace + stim','dF','tV','de','t','r','roi','pil',...
-    'xShift','yShift','roiCentroid','resWarpRA','linRA')
+save('trace + stim','dF','tV','t','r','roi','pil','de','cDe','gAll','snAll','bAll',....
+    'cResid','roiCentroid','resWarpRA','linRA')
 
 %% Exploration
 nROI = nROI + 1,
@@ -91,9 +84,22 @@ flowScript_population;
 distMat = 310*distMat/linRA.ImageExtentInWorldX;
 stimMag = median(repStim(:,1:10),2);
 %goodNeur = find(stimMag>prctile(stimMag,25));
-goodNeur = find([roi.group]==1);
+%goodNeur = find([roi.group]==1);
+stimCells = find([roi.group]==1);
+respCells = find([roi.group]==1 | [roi.group]==9);
+%respCells = find([roi.group]==9);
 respMat = mean(pkStim,3);
 makePopStimFigs;
+
+%% Shuffle Analysis
+nShuffles = 1e5;
+distThresh = 30;
+spkThresh = 1;
+stimTotalDur = max(tV.stimFrames{1})-min(tV.stimFrames{1})+5;
+stimCells = find(stimMag>spkThresh);
+respCells = find([roi.group]==1 | [roi.group]==9);
+
+makeConnectionShufFigs,
 
 %% power dependency
 
@@ -139,14 +145,6 @@ plot(mean(repStim(ind,:))/mean(stimMag(ind)))
 xlabel('Stim Repeat')
 ylabel('Stim Response (normalized)')
 legend('All','8%','24%','72%')
-%% Shuffle Analysis
-nShuffles = 1e5;
-distThresh = 30;
-spkThresh = 3;
-
-makeConnectionShufFigs,
-
-
 %% Archive
 shufResp = nan(size(de,1),nShuffles);
 for nShuffle = 1:nShuffles

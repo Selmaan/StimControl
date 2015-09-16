@@ -8,11 +8,23 @@ for i=1:size(s,1)
 end
 plot(x,nanmean(s),'k','linewidth',2)
 axis tight
-sD = getTrigStim(dF,tV,sel,nROI,0,1) * 30;
-figure(2),clf,imagesc(x,1:size(sD,1),matConv(sD,3))
+stimOnsets = cellfun(@min, tV.stimFrames(sel));
+X = -299:300;
+for stimTrial = 1:length(stimOnsets)
+    stimOnset = stimOnsets(stimTrial);
+    if stimOnset + min(X) > 0
+        sD(stimTrial,:) = de(nROI,stimOnset+X);
+    else
+        offset = stimOnset + min(X) - 1;
+        sD(stimTrial,1-offset:end) = de(nROI,stimOnset + X(1-offset:end));
+    end
+end
+sD = sD * 30;
+%sD = getTrigStim(dF,tV,sel,nROI,0,1) * 30;
+figure(2),clf,imagesc(x,1:size(sD,1),matConv(sD,2))
 figure(3),clf,plot(x,mean(sD),'k'),
-hold on,plot(x,median(matConv(sD,3)),'r','linewidth',2)
-plot(x,mean(matConv(sD,3)),'g','linewidth',2)
+hold on,plot(x,median(matConv(sD,2)),'r','linewidth',2)
+plot(x,mean(matConv(sD,2)),'g','linewidth',2)
 axis tight,
 
 figure(4),clf

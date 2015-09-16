@@ -1,6 +1,5 @@
-stimCells = find(stimMag>spkThresh);
-respCells = find([roi.group]==1);
 stimRepeats = size(repStim,2);
+stimFrameOffsets = repmat((0:stimTotalDur-1)',1,stimRepeats);
 shufMat=[];
 ctrlMat=[];
 for iROI = 1:length(respCells)
@@ -8,11 +7,14 @@ for iROI = 1:length(respCells)
     validTargets = find(distMat(nROI,:)>=distThresh);
     sel = ismember(tV.nTarg,validTargets);
     validForShuf = tV.stimFrames(sel);
+    validForShuf = [validForShuf{:}];
+    validOnsets = validForShuf(1,:);
     shufResp = nan(nShuffles,1);
     for nShuffle = 1:nShuffles
-        thisShuf = randperm(length(validForShuf),stimRepeats);
-        stimOnsets = cellfun(@min, validForShuf(thisShuf));
-        respFrames = repmat(stimOnsets,11,1) + repmat((0:10)',1,stimRepeats);
+        thisShuf = randperm(length(validOnsets),stimRepeats);
+        stimOnsets = validOnsets(thisShuf);
+%         stimOnsets = cellfun(@min, validForShuf(thisShuf));
+        respFrames = repmat(stimOnsets,stimTotalDur,1) + stimFrameOffsets;
         shufResp(nShuffle) = sum(de(nROI,respFrames(:)))/stimRepeats;
     end
 
@@ -31,16 +33,23 @@ ctrlOdds = nShuffles./(nShuffles+1-ctrlMat);
 shufDist = distMat(stimCells,respCells);
 shufVals = shufOdds(shufDist>=distThresh);
 ctrlVals = ctrlOdds(shufDist>=distThresh);
-figure,ecdf(log10(ctrlVals))
-hold on,ecdf(log10(shufVals)),
-xlabel('log inverse FP Odds')
 figure,plot(shufDist(shufDist>=distThresh),log10(shufVals),'.')
 title('True Values'),
 ylabel('log inverse FP Odds')
 xlabel('Interaction Distance')
-ylim([-0.1 5.1])
+ylim([-0.1 log10(nShuffles)+0.1])
 figure,plot(shufDist(shufDist>=distThresh),log10(ctrlVals),'.')
 title('Shuffled Values'),
 ylabel('log inverse FP Odds')
 xlabel('Interaction Distance')
-ylim([-0.1 5.1])
+ylim([-0.1 log10(nShuffles)+0.1])
+[fC,xC]=ecdf(log10(ctrlVals));
+[fT,xT]=ecdf(log10(shufVals));
+figure
+semilogy(log10(1:nShuffles/100:nShuffles/10),1./(1:nShuffles/100:nShuffles/10),'k')
+hold on
+semilogy(xC,1-fC,'linewidth',3)
+semilogy(xT,1-fT,'linewidth',3)
+xlabel('log10 inverse FP Odds')
+ylabel('Fraction Measurements Positive')
+legend('Theory','Control','Data')
