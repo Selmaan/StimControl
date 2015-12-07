@@ -1,20 +1,24 @@
 function onDemandSequencer(source,eventData)
 
+    global dmdSeqTimer dmdSeqTimes
+    
     hSI = source.hSI;
     hPS = hSI.hPhotostim;
-    
-    persistent sequence;
-    persistent sequencePtr;
-    
-    if isempty(sequence)
-        sequence = [1 2 3 4 5];
-        sequencePtr = 1;
-    end
+    sequence = hPS.sequenceSelectedStimuli;
+    sequencePtr = hPS.numSequences;
     
     switch eventData.EventName
         case 'onDmdStimComplete'
+            dmdSeqTimes(sequencePtr,1) = toc(dmdSeqTimer);
+            if sequencePtr > length(sequence)
+                hSI.hPhotostim.abort();
+                fprintf('Stim Sequence Completed! \n'),
+            else
+                hPS.onDemandStimNow(sequence(sequencePtr));
+            end
+            dmdSeqTimes(sequencePtr,2) = toc(dmdSeqTimer);
             sequencePtr = sequencePtr + 1;
-            hPS.onDemandStimNow(sequence(sequencePtr));
+            hPS.numSequences = sequencePtr;
     end
 
 end

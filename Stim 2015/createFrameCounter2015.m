@@ -3,7 +3,7 @@ function createFrameCounter2015(src,evt,frameInterval)
 taskName = 'Frame Clock Divider';
 
 switch evt.EventName
-        case {'seqStimStart','onDmdStimStart'}
+        case 'seqStimStart'
             
             stimBoardID = 'ExtGalvoUSB';
             ctrChanID = 3;
