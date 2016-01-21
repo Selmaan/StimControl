@@ -1,16 +1,18 @@
 %% Create 
-powers = [20];
+powers = [15];
 %stimDur = 68e-3;
 framePer = hSI.hRoiManager.scanFramePeriod;
 interStimDur = 2*framePer;
 stimDur = 1*framePer;
-trainReps = 10;
+trainReps = 5;
 
 %defStimScale = [0.007 0.007];
 %defStimScale = [0.006 0.006];
+offsetFractions = [.5 1 1.5];
 
 % initROIgroupsStandard,
-initROIgroupsTrainStim,
+% initROIgroupsTrainStim,
+initROIgroupsResolutionMapping,
 %% Create Permutation Order
 numPermutations = 10;
 framesITI = 100;
