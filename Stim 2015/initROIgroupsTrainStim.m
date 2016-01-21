@@ -47,7 +47,7 @@ for i=1:length(baseRoiGroup.rois)
         hRoi.scanfields.duration = stimDur - 1e-3;
         thisPowerInd = mod(length(listCellIDs),length(powers)) + 1;
         hRoi.scanfields.powers = powers(thisPowerInd);
-        hRoi.scanfields.scalingXY = defStimScale;
+        %hRoi.scanfields.scalingXY = defStimScale;
         hRoiGroup.add(hPauseRoi);
         for trainRep = 1:trainReps
             hRoiGroup.add(hRoi);
