@@ -1,21 +1,22 @@
 %% Create 
-powers = [15];
+powers = [20];
 %stimDur = 68e-3;
 framePer = hSI.hRoiManager.scanFramePeriod;
 interStimDur = 2*framePer;
 stimDur = 1*framePer;
-trainReps = 5;
+trainReps = 10;
 
-defStimScale = [0.007 0.007];
-%defStimScale = [0.005 0.005];
+%defStimScale = [0.007 0.007];
+%defStimScale = [0.006 0.006];
 
 % initROIgroupsStandard,
 initROIgroupsTrainStim,
 %% Create Permutation Order
 numPermutations = 10;
-framesITI = 30;
+framesITI = 100;
 
 createPermOrderStandard,
+length(listPermSeq) * framesITI,
 %% Start photostim
 configOnDmdStim,
 tic,
