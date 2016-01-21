@@ -13,6 +13,8 @@ function onDemandSequencer(source,eventData)
             if sequencePtr > length(sequence)
                 hSI.hPhotostim.abort();
                 fprintf('Stim Sequence Completed! \n'),
+                interSeqTimes = diff(dmdSeqTimes(2:end,2),[],1);
+                figure,plot(interSeqTimes(1:end-1),'.')
             else
                 hPS.onDemandStimNow(sequence(sequencePtr));
             end
