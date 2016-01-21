@@ -3,6 +3,7 @@
 baseDir = fileparts(expt1.correctedMovies.slice.channel.fileName{1});
 fnRes = [baseDir '\expt1_00001_00001.tif'];
 fnLin = [baseDir, '\linFOV1_1.tif'];
+%gRes = meanRef(expt1);
 
 temp2015alignment,
 
@@ -25,13 +26,13 @@ nROI = nROI + 1,
 figure(7),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'r+','markersize',10),
 figure(8),plot(roiCentroid(nROI,1),roiCentroid(nROI,2),'r+','markersize',10),
 
-% ref = meanRef(rFOV1); %ref = imresize(ref,2);
+% ref = meanRef(rFOV2); %ref = imresize(ref,2);
 % ref(isnan(ref)) = 0; ref(ref<0) = 0;
 % load('C:\Users\Selmaan\Documents\MATLAB\r2s_25x.mat'),
 % sReg = imwarp(imresize(ref,1.4),r2s,'OutputView',imref2d(size(ref)));
 % tV = vecTrials(stimExpt);
 % exF = reshape([tV.stimFrames{:}],,[]);
-% selectROIs(rFOV1,[],[],[],[],exF);
+% selectROIs(rFOV2,[],[],[],[],exF);
 % hEl = dispStimROIs(stimExpt.StimROIs,adapthisteq(imNorm(sReg)));
 % hEl2 = dispStimROIs(stimExpt.StimROIs);
 % nROI = 1;
@@ -58,7 +59,7 @@ for nNeur=1:size(dF,1)
         = constrained_foopsi(yCorr);
     cResid(nNeur,:) = xcov(yCorr-(bAll(nNeur)+cDe(nNeur,:)),1e3,'coef');
     pM = max(impulseAR(gAll(nNeur,:)));
-    de(nNeur,:) = de(nNeur,:)*pM*10;
+    de(nNeur,:) = de(nNeur,:)*pM*20;
 end
 
 % allShifts = [expt1.shifts.slice];
@@ -81,7 +82,8 @@ nTarg = nROI;
 flowScript_exploration;
 %% Automation / extra analyses
 flowScript_population;
-distMat = 310*distMat/linRA.ImageExtentInWorldX;
+% distMat = 310*distMat/linRA.ImageExtentInWorldX; %z:1.5x obj:25x
+distMat = 350*distMat/linRA.ImageExtentInWorldX; %z:1.3x obj:25x
 stimMag = median(repStim(:,1:10),2);
 %goodNeur = find(stimMag>prctile(stimMag,25));
 %goodNeur = find([roi.group]==1);
@@ -92,9 +94,10 @@ respMat = mean(pkStim,3);
 makePopStimFigs;
 
 %% Shuffle Analysis
-nShuffles = 1e5;
-distThresh = 30;
+nShuffles = 1e6;
+distThresh = 20;
 spkThresh = 1;
+shufOffset = 14;
 stimTotalDur = max(tV.stimFrames{1})-min(tV.stimFrames{1})+5;
 stimCells = find(stimMag>spkThresh);
 respCells = find([roi.group]==1 | [roi.group]==9);
@@ -145,47 +148,7 @@ plot(mean(repStim(ind,:))/mean(stimMag(ind)))
 xlabel('Stim Repeat')
 ylabel('Stim Response (normalized)')
 legend('All','8%','24%','72%')
-%% Archive
-shufResp = nan(size(de,1),nShuffles);
-for nShuffle = 1:nShuffles
-    if mod(nShuffle,100) == 0
-        nShuffle,
-    end
-    for nTarg = 1:size(dF,1)
-        sel = tV.nTarg == nTarg;
-        validForShuf = tV.stimFrames(~sel);
-        shufSelection = [randperm(length(validForShuf)),randperm(length(validForShuf),sum(sel))];
-        shufFrames = validForShuf(shufSelection);
-        stimOnsets = cellfun(@min, shufFrames(sel));
-        shufTrialResp = nan(length(stimOnsets),1);
-        for stimTrial = 1:length(stimOnsets)
-            stimOnset = stimOnsets(stimTrial);
-            shufTrialResp(stimTrial) = ...
-                sum(de(nTarg,stimOnset:stimOnset+10),2);
-        end
-        shufResp(nTarg,nShuffle) = mean(shufTrialResp);
-    end
-end
 
-mShuf = mean(shufResp,2);
-sShuf = std(shufResp,[],2);
-figure,plot(mShuf,sShuf,'.')
-hold on,plot(0:1e-1:.2,0:1e-1:.2)
-zRespMat = respMat;
-for i = 1:size(dF,1)
-    for j = 1:size(dF,1)
-    zRespMat(i,j) = sum(respMat(i,j)>shufResp(j,:));
-    end
-end
-gzRespMat = zRespMat(goodNeur,goodNeur);
-%figure,imagesc(nShuffles./(nShuffles-gzRespMat)),
-gDistMat = distMat(goodNeur,goodNeur);
-offDiag = gzRespMat(gDistMat>20);
-offDiagDist = gDistMat(gDistMat>20);
-for thresh = 1:nShuffles
-    respRatio(thresh) = sum(offDiag>=(nShuffles+1-thresh))/(length(offDiag)*(thresh/nShuffles));
-end
-figure,plot(respRatio)
 %% Sparse Exp Analysis
 figure,boxplot(stimMag,[roi.group]),
 nonExp = find([roi.group]>3);
@@ -210,8 +173,8 @@ end
 predMat(nNeurons+1,:) = linspace(0,1,length(tV.nTarg));
 predMat(nNeurons+2,:) = sqrt(linspace(0,1,length(tV.nTarg)));
 predMat(nNeurons+3,:) = 0;
-predMat(nNeurons+4,:) = 0;
-predMat(nNeurons+5,:) = 0;
+%predMat(nNeurons+4,:) = 0;
+%predMat(nNeurons+5,:) = 0;
 resp = nan(length(tV.stimFrames),1);
 for i=1:length(tV.stimFrames)
     respFrames = tV.stimFrames{i}(1):10+tV.stimFrames{i}(1);
@@ -220,11 +183,11 @@ for i=1:length(tV.stimFrames)
     if ~isempty(lastStim)
         predMat(nNeurons+3,i) = exp(sel(lastStim)-i);
     end
-    predMat(nNeurons+4,i) = mean(xShift(tV.stimFrames{i}));
-    predMat(nNeurons+5,i) = mean(yShift(tV.stimFrames{i}));
+    %predMat(nNeurons+4,i) = mean(xShift(tV.stimFrames{i}));
+    %predMat(nNeurons+5,i) = mean(yShift(tV.stimFrames{i}));
 end
-predMat(nNeurons+4,:) = predMat(nNeurons+4,:) - median(xShift);
-predMat(nNeurons+5,:) = predMat(nNeurons+5,:) - median(xShift);
+%predMat(nNeurons+4,:) = predMat(nNeurons+4,:) - median(xShift);
+%predMat(nNeurons+5,:) = predMat(nNeurons+5,:) - median(xShift);
 %mdl = stepwiseglm(predMat',resp,'constant','upper','linear','Distribution','poisson');
 
 display('Fitting...'),

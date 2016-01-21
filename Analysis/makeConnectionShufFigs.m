@@ -1,5 +1,6 @@
 stimRepeats = size(repStim,2);
 stimFrameOffsets = repmat((0:stimTotalDur-1)',1,stimRepeats);
+stimFrameOffsets = stimFrameOffsets + shufOffset;
 shufMat=[];
 ctrlMat=[];
 for iROI = 1:length(respCells)
