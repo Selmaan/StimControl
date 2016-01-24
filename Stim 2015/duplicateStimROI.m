@@ -6,7 +6,7 @@ end
 
 sf = StimROI.scanfields;
 
-newSF = StimulusField(sf.stimfcnhdl,sf.stimparams,sf.duration,sf.repetitions,...
+newSF = scanimage.mroi.scanfield.fields.StimulusField(sf.stimfcnhdl,sf.stimparams,sf.duration,sf.repetitions,...
                 sf.centerXY,sf.scalingXY,sf.rotation,sf.powers);
 
 newROI = scanimage.mroi.Roi();
