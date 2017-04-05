@@ -15,7 +15,7 @@ end
         
 tmp.fSF = log2(tmp.SF(tmp.f2p(tmp.f2p_on:tmp.f2p_off)));
 tmp.fTF = log2(tmp.TF(tmp.f2p(tmp.f2p_on:tmp.f2p_off)));
-tmp.fCT = log2(tmp.CT(tmp.f2p(tmp.f2p_on:tmp.f2p_off)));
+tmp.fCT = tmp.CT(tmp.f2p(tmp.f2p_on:tmp.f2p_off));
 
 %% randomGratings protocol info
 
