@@ -1,5 +1,7 @@
 %% PreProcessing
 
+
+
 baseDir = fileparts(expt1.correctedMovies.slice.channel.fileName{1});
 fnRes = [baseDir '\expt1_00001_00001.tif'];
 fnLin = [baseDir, '\linFOV1_1.tif'];

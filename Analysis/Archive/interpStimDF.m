@@ -1,3 +1,4 @@
+function dF = interpStimDF(dF,exF,stimFrameDur)
 
 dF(:,exF) = nan;
 interpDenom = stimFrameDur + 1;
