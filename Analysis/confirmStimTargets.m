@@ -1,4 +1,13 @@
-function [targetID,targetLabel] = confirmStimTargets(stimExpt,acqObj)
+function [targetID,targetLabel] = confirmStimTargets(stimExpt,acqObj,idExp)
+
+%%
+% Code for confirmation numbers is
+% -2: reset selection
+% -1: choose next closest source
+% 0: No source, no response
+% 0.1: No source, response
+% 1: Source, response
+% 1.1: Source, no response
 
 %% inputs
 fprintf('Loading Data...'),
@@ -22,8 +31,14 @@ for nBlock = find(stimExpt.stimBlocks)
 end
 
 %%
+if ~exist('idExp','var') || isempty(idExp)
+    idExp = 1:nTargs;
+    fprintf('Confirming Targets 1 through %d \n',nTargs),
+else
+    fprintf('Confirming Targets %d through %d \n',min(idExp),max(idExp)),
+end
 stimTargets = struct;
-idExp = input('Input vector of expressing-target numbers: ');
+% idExp = input('Input vector of expressing-target numbers: ');
 idNonExp = setdiff(1:nTargs,idExp);
 
 
@@ -79,7 +94,7 @@ for nTarget = idExp
         end
     end
     targetLabel(nTarget) = respFlag;
-    if respFlag > 0
+    if respFlag >= 1
         targetID(nTarget) = thisSource;
     else
         targetID(nTarget) = nan;
@@ -107,9 +122,16 @@ function plotSourceTarget(stimExpt,stimFrames,...
     thisFilt = cellFilts(:,thisSource)*2;
     nearFilts = sum(cellFilts(:,setdiff(nearSources,thisSource)),2);
     stimRef = stimExpt.procStimIm(:,:,nTarget);
-    stimRef = stimRef/sum(stimRef(:))*10;
+    stimRef = stimRef/sum(stimRef(:))*5;
     imFilt = reshape(full([thisFilt, nearFilts, stimRef(:)]),512,512,3);
     figure(639),
-    imshow(imresize(imFilt((-20:20)+colIntrinsic,(-20:20)+rowIntrinsic,:)*15,10)),
+    imshow(imresize(imFilt((-20:20)+colIntrinsic,(-20:20)+rowIntrinsic,:)*20,10)),
+    
+    [linColInt,linRowInt] = worldToSubscript(stimExpt.linRA,...
+        stimExpt.roiCentroid(nTarget,1),stimExpt.roiCentroid(nTarget,2));
+    figure(640),
+    linColVals = min(max((-20:20)+linColInt,1),512);
+    linRowVals = min(max((-20:20)+linRowInt,1),512);
+    imshow(imresize(stimExpt.rLin(linColVals,linRowVals)/600-.2,10)),
     
 end
