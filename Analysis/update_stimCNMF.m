@@ -34,7 +34,8 @@ interpFrames{3} = stimFrames-1;
 [dF,deconv,denoised,Gs,Lams,A,b,f] = extractTraces_NMF(acqObj,validSources,interpFrames);
 dF = cell2mat(dF);
 A = cell2mat(A);
-denoised = cell2mat(denoised);
+% denoised = cell2mat(denoised);
+clear denoised
 deconv = cell2mat(deconv);
 %% 
 
