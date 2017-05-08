@@ -8,6 +8,7 @@ function [targetID,targetLabel] = confirmStimTargets(stimExpt,acqObj,idExp)
 % 0.1: No source, response
 % 1: Source, response
 % 1.1: Source, no response
+% 1.2: Merged or Split Source, response
 
 %% inputs
 fprintf('Loading Data...'),
