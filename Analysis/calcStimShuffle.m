@@ -1,21 +1,23 @@
-function [nRespMat, visResid, deResp, stimID, visOri, visCon, stimMag] = ...
+function [nRespMat, pRespMat, visResid, deResp, stimID, visOri, visCon, stimMag, mvSpd] = ...
     calcStimShuffle(stimExpt, distThresh)
 
 if nargin<2
     distThresh = 30;
 end
 
-respFrameRange = 0:10;
+respFrameRange = 0:15;
 distConv = stimExpt.xConvFactor;
-nShuffles = 1e3;
-
-%% TEMPORARY FIX FOR BASELINE ERROR!!
-for n = find(sum(stimExpt.dF_deconv<0,2)>0)
-    stimExpt.dF_deconv(n,:) = stimExpt.dF_deconv(n,:)*-1;
+if distConv ~= stimExpt.yConvFactor
+    warning('x and y conversion factors are not equal!'),
 end
 
+nShuffles = 1e4;
+
+
 %% Reformat Stim+Grating Response Data
-visOri = [];visCon=[];stimID=[];deResp=[];
+visOri = [];visCon=[];stimID=[];deResp=[];mvSpd=[];
+ballVel = cat(1,stimExpt.ballVel{:});
+ballVel = bsxfun(@minus,ballVel,mode(ballVel));
 for nBlock = find(stimExpt.stimBlocks)
     blockOffsetFrame = length(cat(1,stimExpt.frameTimes{1:nBlock-1}));
     lastTrial = find(~isnan(stimExpt.psych2frame{nBlock}),1,'last')-1;
@@ -28,11 +30,14 @@ for nBlock = find(stimExpt.stimBlocks)
     thisDeResp = reshape(stimExpt.dF_deconv(:,respFrames),...
            [size(stimExpt.dF_deconv,1),size(respFrames)]);
     thisDeResp = squeeze(mean(thisDeResp,2))';
+    thisMvSpd = reshape(ballVel(respFrames,:),[size(respFrames), size(ballVel,2)]);
+    thisMvSpd = sqrt(sum(squeeze(mean(thisMvSpd,1)).^2,2));
     
     visOri = cat(1,visOri,thisVisOri);
     visCon = cat(1,visCon,thisVisCon);
     stimID = cat(1,stimID,thisStimID);
     deResp = cat(1,deResp,thisDeResp);
+    mvSpd = cat(1,mvSpd,thisMvSpd);
 end
 
 %% Calculate Residual Signal
@@ -52,16 +57,18 @@ for s=1:length(allDirs)
     end
 end
 
-for i=1:length(stimExpt.cellStimInd)
-    theseTrials = find(stimID == i);
-    stimMag(i) = mean(visResid(theseTrials,stimExpt.cellStimInd(i)));
+validTargets = find(stimExpt.targetLabel>=1);
+for i=1:length(validTargets)
+    theseTrials = find(stimID == validTargets(i));
+    stimMag(i,:) = visResid(theseTrials,i);
 end
 
 %% Shuffle Bootstrap
 
 nRespCells = size(visResid,2);
-nStimCells = length(stimExpt.cellStimInd);
-nReps = sum(~isnan(stimID))/nStimCells;
+nTargets = length(stimExpt.stimSources);
+nReps = sum(~isnan(stimID))/nTargets;
+fprintf('Detected Repetitions of Target Stim: %d \n',nReps),
 nTrials = size(visResid,1);
 
 tmpDist = stimExpt.cellStimDistMat*distConv;
@@ -83,10 +90,19 @@ end
 
 shufMAD = mean(abs(shufMat));
 
-respMat = nan(nRespCells,nStimCells);
-for nStimCell = 1:nStimCells
+respMat = nan(nRespCells,nTargets);
+for nStimCell = 1:nTargets
     theseTri = find(stimID==nStimCell);
     validCells = find(stimExpt.cellStimDistMat(:,nStimCell)*distConv >= distThresh);
     respMat(validCells,nStimCell) = mean(visResid(theseTri,validCells))';
 end
-nRespMat = bsxfun(@rdivide,respMat,shufMAD' * 1.253);
+pRespMat = bsxfun(@rdivide,respMat,shufMAD' * 1.253);
+
+for n=1:size(respMat,1)
+    for t=1:size(respMat,2)
+        gtMat(n,t) = sum(shufMat(:,n)>respMat(n,t));
+        ltMat(n,t) = sum(shufMat(:,n)<respMat(n,t));
+    end
+end
+
+nRespMat = log10((nShuffles-gtMat+1)./(nShuffles-ltMat+1));
