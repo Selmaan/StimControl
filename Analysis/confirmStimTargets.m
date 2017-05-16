@@ -121,12 +121,16 @@ function plotSourceTarget(stimExpt,stimFrames,...
     [colIntrinsic,rowIntrinsic] = worldToSubscript(stimExpt.resRA,...
         stimExpt.roiCentroid(nTarget,1),stimExpt.roiCentroid(nTarget,2));
     thisFilt = cellFilts(:,thisSource)*2;
+    thisFilt = 2*thisFilt/max(thisFilt);
     nearFilts = sum(cellFilts(:,setdiff(nearSources,thisSource)),2);
+    nearFilts = 2*nearFilts/max(nearFilts);
+%     allNearFilts = cellFilts(:,setdiff(nearSources,thisSource));
+%     nearFilts = sum(bsxfun(@rdivide,2*allNearFilts,max(allNearFilts)),2);
     stimRef = stimExpt.procStimIm(:,:,nTarget);
-    stimRef = stimRef/sum(stimRef(:))*5;
+    stimRef = 2*stimRef/max(stimRef(:));
     imFilt = reshape(full([thisFilt, nearFilts, stimRef(:)]),512,512,3);
     figure(639),
-    imshow(imresize(imFilt((-20:20)+colIntrinsic,(-20:20)+rowIntrinsic,:)*20,10)),
+    imshow(imresize(imFilt((-20:20)+colIntrinsic,(-20:20)+rowIntrinsic,:),10)),
     
     [linColInt,linRowInt] = worldToSubscript(stimExpt.linRA,...
         stimExpt.roiCentroid(nTarget,1),stimExpt.roiCentroid(nTarget,2));
