@@ -26,7 +26,7 @@ figure,plot(median(stimMag)),
     influenceRegression(stimExpt, distThresh);
 figure,imagesc(corrcoef(respBeta./respBetaVar)),
 %%
-tmp.dBinWidth = 80;
+tmp.dBinWidth = 100;
 validResp = stimBeta./stimBetaVar;
 % validResp = nRespMat;
 validResp(:,stimExpt.targetLabel==0)=nan;
@@ -38,6 +38,27 @@ for d=1:500
 %     infDistBin(d) = nanmean(tmp.theseVals);
     tmp.theseVar = stimBetaVar(tmp.thesePairs);
     infDistBin(d) = sum(tmp.theseVals)/sum(1./tmp.theseVar);
-%     infDistBin(d) = trimmean(tmp.theseVals,0);
 end
 figure,plot((1:500)+tmp.dBinWidth/2,infDistBin),
+
+%%
+validResp = ~isnan(stimBeta);
+% validResp = true(size(stimBeta)); 
+% validResp(:,stimExpt.targetLabel<1)=false;
+% Y = stimBeta(validResp)./sqrt(stimBetaVar(validResp));
+dummyResp = repmat((1:size(validResp,1))',1,size(validResp,2));
+dummyTarg = repmat(1:size(validResp,2),size(validResp,1),1);
+
+X = stimExpt.cellStimDistMat(validResp)*stimExpt.xConvFactor;
+distCenters = 0:50:600;
+distWidth = 200;
+[X,k] = cosineKernelize(X, distCenters, distWidth);
+Z{1} = ones(sum(validResp(:)),1);
+Z{2} = ones(sum(validResp(:)),1);
+G{1} = dummyResp(validResp);
+G{2} = dummyTarg(validResp);
+lme = fitlmematrix(X,Y,Z,G),
+rE = randomEffects(lme);
+fE = fixedEffects(lme);
+figure,plot(linspace(distCenters(1),distCenters(end),1e3),k*fE),
+xlim([50 500]),

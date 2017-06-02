@@ -2,13 +2,14 @@
 tmp = struct;
 
 tmp.gratingBlocks = find(~stimExpt.stimBlocks);
-tmp.Traces = [];
+% tmp.Traces = [];
 for nBlock = tmp.gratingBlocks
     tmp.Dir = stimExpt.stimInfo{nBlock}(6:6:end);
     tmp.SF = stimExpt.stimInfo{nBlock}(7:6:end);
 %     tmp.TF = stimExpt.stimInfo{nBlock}(8:6:end)./tmp.SF;
     tmp.TF = stimExpt.stimInfo{nBlock}(8:6:end);
     tmp.CT = stimExpt.stimInfo{nBlock}(9:6:end);
+    tmp.Ph = stimExpt.stimInfo{nBlock}(10:6:end);
     
     tmp.f2p = interp1(stimExpt.psychTimes{nBlock},...
         1:length(stimExpt.psychTimes{nBlock}),stimExpt.frameTimes{nBlock},'nearest');
@@ -21,13 +22,14 @@ for nBlock = tmp.gratingBlocks
     tmp.fSF{nBlock}(tmp.f2p_valid) = log2(tmp.SF(tmp.f2p(tmp.f2p_valid)));
     tmp.fTF{nBlock}(tmp.f2p_valid) = log2(tmp.TF(tmp.f2p(tmp.f2p_valid)));
     tmp.fCT{nBlock}(tmp.f2p_valid) = tmp.CT(tmp.f2p(tmp.f2p_valid));
-    tmp.blockOffsetFrame = length(cat(1,stimExpt.frameTimes{1:nBlock-1}));
-    tmp.Traces = cat(2,tmp.Traces,stimExpt.dF_deconv...
-        (:,tmp.blockOffsetFrame+1:tmp.blockOffsetFrame+length(stimExpt.frameTimes{nBlock})));
+    tmp.fPh{nBlock}(tmp.f2p_valid) = tmp.Ph(tmp.f2p(tmp.f2p_valid));
+%     tmp.blockOffsetFrame = length(cat(1,stimExpt.frameTimes{1:nBlock-1}));
+%     tmp.Traces = cat(2,tmp.Traces,stimExpt.dF_deconv...
+%         (:,tmp.blockOffsetFrame+1:tmp.blockOffsetFrame+length(stimExpt.frameTimes{nBlock})));
 end
 
-tmp.Traces = matConv(tmp.Traces,3);
-tmp.naiveCorr = corr(tmp.Traces',tmp.Traces(stimExpt.cellStimInd,:)');
+% tmp.Traces = matConv(tmp.Traces,3);
+% tmp.naiveCorr = corr(tmp.Traces',tmp.Traces(stimExpt.cellStimInd,:)');
 
 %% Make GLM Predictor Matrices
 nDir = 18;
@@ -52,7 +54,7 @@ for i=1:size(validResp,2)
     end
 end
 %%
-tmp.dBinWidth = 100;
+tmp.dBinWidth = 60;
 tmp.Dist = stimExpt.cellStimDistMat*stimExpt.xConvFactor;
 infDistBin = nan(500,1);
 infDistCorBin = nan(500,1);
@@ -61,11 +63,12 @@ for d=1:500
     tmp.theseVals = validResp(tmp.thesePairs);
     tmp.invalidPairs = isnan(tmp.theseVals);
     tmp.theseVals(tmp.invalidPairs)=[];
-    tmp.theseCorr = tmp.naiveCorr(tmp.thesePairs);
-    tmp.theseCorr(tmp.invalidPairs) = [];
-    infDistBin(d) = trimmean(tmp.theseVals,0);
-    infDistCorBin(d) = corr(tmp.theseCorr,tmp.theseVals,'type','Spearman');
+%     tmp.theseCorr = tmp.naiveCorr(tmp.thesePairs);
+%     tmp.theseCorr(tmp.invalidPairs) = [];
+    infDistBin(d) = trimmean(tmp.theseVals,5);
+%     infDistCorBin(d) = corr(tmp.theseCorr,tmp.theseVals,'type','Spearman');
 end
+figure,plot((1:500)+tmp.dBinWidth/2,infDistBin),
 
 %% randomGratings protocol info
 
