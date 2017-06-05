@@ -1,7 +1,15 @@
 %%
 
 allResp = randomGratingsRespStruct(stimExpt);
+[oH, oPh, gPar] = fitRandomGratingsGP(allResp);
 
+yTrain = nan(size(gPar.Y));
+trainCorr = nan(size(gPar.Y,2),1);
+for nNeur = 1:length(oH)
+    yTrain(:,nNeur) = gp(oH(i), @infGaussLik, ...
+        gPar.meanFunc, gPar.covFunc, gPar.likFunc, gPar.X, gPar.Y(:,i), gPar.X);
+    trainCorr(nNeur) = corr(yTrain(:,nNeur),gPar.Y(:,i));
+end
 
 
 %%
