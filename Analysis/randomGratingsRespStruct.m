@@ -1,5 +1,7 @@
 function allResp = randomGratingsRespStruct(stimExpt)
 
+allResp = struct;
+allResp.nCycles = [];
 
 gratingBlocks = find(~stimExpt.stimBlocks);
 for nBlock = gratingBlocks
@@ -25,9 +27,10 @@ for nBlock = gratingBlocks
     cycleDur = mode(diff(ctTrig));
     allResp.yPh{nBlock} = zeros(size(traces,1),cycleDur);
     fprintf('Block %d had %d cycles at %d frames-per-cycle \n',nBlock,length(ctTrig)-1,cycleDur);
+    allResp.nCycles(end+1) = length(ctTrig)-1;
     for nCycle = 1:length(ctTrig)-1
         cycleInd = ctTrig(nCycle) + (1:cycleDur);
-        allResp.Y{nBlock}(:,nCycle) = mean(traces(:,cycleInd),2);
+        allResp.Y{nBlock}(:,nCycle) = sum(traces(:,cycleInd),2);
         allResp.yPh{nBlock} = allResp.yPh{nBlock} + traces(:,cycleInd)/length(ctTrig);
         allResp.Dir{nBlock}(nCycle) = mode(fDir(cycleInd));
         allResp.SF{nBlock}(nCycle) = mode(fSF(cycleInd));
