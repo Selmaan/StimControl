@@ -2,20 +2,45 @@
 
 allResp = randomGratingsRespStruct(stimExpt);
 [oH, oPh, gPar] = fitRandomGratingsGP(allResp);
-
-yTrain = nan(size(gPar.Y));
-trainCorr = nan(size(gPar.Y,2),1);
-for nNeur = 1:length(oH)
-    yTrain(:,nNeur) = gp(oH(i), @infGaussLik, ...
-        gPar.meanFunc, gPar.covFunc, gPar.likFunc, gPar.X, gPar.Y(:,i), gPar.X);
-    trainCorr(nNeur) = corr(yTrain(:,nNeur),gPar.Y(:,i));
-end
+[tuneResults] = rgTuningCurvesGP(allResp, oH, oPh, gPar);
 
 
 %%
+nNeuron = 65;
+X = [cosd(allResp.Dir),sind(allResp.Dir),...
+    allResp.SF,allResp.TF,sqrt(allResp.spd)];
+% gratingBlock = zeros(length(allResp.Dir),1);
+% gratingBlock(1:allResp.nCycles(1)) = 1;
+% gratingBlock(allResp.nCycles(1)+1:sum(allResp.nCycles)) = 2;
+% X = [cosd(allResp.Dir),sind(allResp.Dir),...
+%     allResp.SF,allResp.TF,sqrt(allResp.spd), gratingBlock];
+% Y = zscore(sqrt(allResp.Y(:,nNeuron)));
+% Y = allResp.Y(:,nNeuron)/std(allResp.Y(:,nNeuron));
+% Y = allResp.Y(:,nNeuron);
+% Y = zscore(allResp.Y(:,nNeuron));
+Y = sqrt(allResp.Y(:,nNeuron))/std(sqrt(allResp.Y(:,nNeuron)));
 
+hyp = struct;
+meanFunc = {@meanConst}; hyp.mean = 0;
+% meanFunc = [];
+covFun1 = {@covMask, {[1 1 0 0 0], {@covSE,'iso',[]}}};
+covFun2 = {@covMask, {[0 0 1 1 1], {@covSE,'ard',[]}}};
+covFunc = {@covScale {@covProd, {covFun1, covFun2}}};
+hyp.cov = zeros(eval(feval(covFunc{:})),1);
 
-exp(optHyp.cov(1:4))./range(X(:,2:end))',
+likFunc = {@likGauss};
+% likFunc = {@likT};
+% likFunc = {@likNegBinom, 'logistic'};
+% likFunc = {@likPoisson,'exp'};
+% likFunc = {@likMix {{@likNegBinom, 'exp'} {@likGauss}}};
+hyp.lik = zeros(eval(feval(likFunc{:})),1);
+
+optHyp = minimize(hyp, @gp, -100, ...
+        @infLaplace, meanFunc, covFunc, likFunc, X, Y);
+yMu = gp(optHyp, @infLaplace, meanFunc, covFunc, likFunc, X, Y, X);
+
+% exp(optHyp.cov(1:end-1))./range(X(:,2:end))',
+optHyp.cov(1:end-1)
 figure,scatter(allResp.Dir,allResp.SF,[],yMu,'filled'),
 title('Predictions'),xlabel('Dir'),ylabel('SF'),colorbar,
 figure,scatter(allResp.Dir,allResp.SF,[],Y,'filled'),
@@ -25,7 +50,7 @@ title('Real Data'),xlabel('Dir'),ylabel('SF'),colorbar,
 figure,plot(Y,yMu,'.'),xlabel('Real Values'),ylabel('Predicted Values'),
 
 %%
-nCV = 5;
+nCV = 10;
 predVals = [];
 for i=1:nCV
     i,
@@ -41,7 +66,7 @@ title(sprintf('Prediction Correlation %0.3f',corr(predVals(:,1),predVals(:,2))))
 xlabel('True Values'),ylabel('Predicted Values'),
 
 %%
-samplingDensity = 6;
+samplingDensity = 8;
 tmp = struct;
 tmp.rangeFact = max(ceil(samplingDensity*range(X(:,2:end))'./exp(optHyp.cov(1:end-1))),3);
 tmp.rangeFact(1) = max(2*tmp.rangeFact(1),24);
@@ -53,7 +78,7 @@ tmp.valSpd = linspace(min(X(:,end)),max(X(:,end)),tmp.rangeFact(4));
 tmp.gCos = cosd(tmp.g1);
 tmp.gSin = sind(tmp.g1);
 tmp.gAll = cat(2,tmp.gCos(:),tmp.gSin(:),tmp.g2(:),tmp.g3(:),tmp.g4(:));
-tic,[tmp.yMu,tmp.yVar] = gp(optHyp, @infGaussLik, meanFunc, covFunc, likFunc, X, Y, tmp.gAll);toc,
+tic,[tmp.yMu,tmp.yVar] = gp(optHyp, @infLaplace, meanFunc, covFunc, likFunc, X, Y, tmp.gAll);toc,
 figure,imagesc(flipud(squeeze(mean(mean(reshape(tmp.yMu,size(tmp.g1)),4),3))'))
 T = tensor(reshape(tmp.yMu,size(tmp.g1)));
 P = cp_als(T,1,'tol',1e-6);
