@@ -1,4 +1,4 @@
-function [optHyp, optHypPh params] = fitRandomGratingsGP(allResp,nNeurons)
+function [optHyp, optHypPh, params] = fitRandomGratingsGP(allResp,nNeurons)
 
 if nargin < 2
     nNeurons = 1:size(allResp.Y,2);
@@ -6,12 +6,26 @@ end
 
 %% Optimize cycle parameters
 
+% if length(allResp.nCycles)>2
+%     error('Function does not support more than two gratings blocks'),
+% end
+
 X = [cosd(allResp.Dir),sind(allResp.Dir),...
     allResp.SF,allResp.TF,sqrt(allResp.spd)];
-Y = zscore(sqrt(allResp.Y(:,nNeurons)));
+% gratingBlock = zeros(length(allResp.Dir),1);
+% gratingBlock(1:allResp.nCycles(1)) = 1;
+% gratingBlock(allResp.nCycles(1)+1:sum(allResp.nCycles)) = 2;
+% 
+% X = [cosd(allResp.Dir),sind(allResp.Dir),...
+%     allResp.SF,allResp.TF,sqrt(allResp.spd), gratingBlock];
+
+% Y = zscore(sqrt(allResp.Y(:,nNeurons)));
+% Y = bsxfun(@rdivide,allResp.Y(:,nNeurons),std(allResp.Y(:,nNeurons)));
+Y = sqrt(allResp.Y(:,nNeurons)); Y = bsxfun(@rdivide,Y,std(Y));
+
 
 hyp = struct;
-meanFunc = [];
+meanFunc = {@meanConst}; hyp.mean = 0;
 covFun1 = {@covMask, {[1 1 0 0 0], {@covSE,'iso',[]}}};
 covFun2 = {@covMask, {[0 0 1 1 1], {@covSE,'ard',[]}}};
 covFunc = {@covScale {@covProd, {covFun1, covFun2}}};
