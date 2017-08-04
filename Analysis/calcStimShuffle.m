@@ -80,6 +80,7 @@ end
 
 shufMat = nan(nShuffles,nRespCells);
 parfor n=1:nRespCells
+% for n=1:nRespCells
     validTrials = validTrialsCell{n};
     nValid = length(validTrials);
     for nShuffle = 1:nShuffles

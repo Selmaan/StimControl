@@ -56,9 +56,9 @@ imGrating = imresize(repmat(grating,length(grating),1),1/scFac);
 % imGrating = imresize(imGrating(4800-gratingWidth:4801+gratingWidth,4800-gratingWidth:4801+gratingWidth),1/scFac);
 centerPix = ceil(size(imGrating,1)/2);
 %%
-frameOffsets = -10:20;
-staWidth = 110;
-Y = zscore(stimExpt.dF_deconv(30:100,:),[],2);
+frameOffsets = -10:2:20;
+staWidth = 115;
+Y = zscore(stimExpt.dF_deconv(:,:),[],2);
 sta = zeros((2*staWidth+1)^2,size(Y,1)*length(frameOffsets));
 % Y = reshape(Y,[1 1 length(Y)]);
 % sta = zeros((2*staWidth+1)^2,size(Y,1),8);

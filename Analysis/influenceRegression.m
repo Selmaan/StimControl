@@ -1,4 +1,4 @@
-function [stimBeta,stimBetaVar,respBeta,respBetaVar,deResp,preResp,stimID,visOri,visCon,mvSpd] = ... 
+function [stimBeta,stimBetaVar,respBeta,respBetaVar,contBeta,contBetaVar,deResp,preResp,stimID,visOri,visCon,mvSpd] = ... 
     influenceRegression(stimExpt, distThresh)
 %% Inputs
 if nargin<2
@@ -99,6 +99,8 @@ X2(:,end) = mvPre>5*mode(mvPre);
 validColumns = cell(0);
 fitMu = nan(size(deResp,2),size(X,2)+1);
 fitVar = nan(size(deResp,2),size(X,2)+1);
+contMu = nan(size(deResp,2), size(X,2)+1-nStim);
+contVar = nan(size(deResp,2), size(X,2)+1-nStim);
 for n=1:size(deResp,2)
     tri = validTrials(:,n);
     excludeTarg = find(invalidTargets(n,:));
@@ -109,6 +111,14 @@ for n=1:size(deResp,2)
     tmpVar = diag(tmpCov);
     fitMu(n,[1,1+validColumns{n}]) = tmpMu;
     fitVar(n,[1,1+validColumns{n}]) = tmpVar;
+    
+    controlTrials = sum(X(:,1:nStim),2)==0;
+    controlX = cat(1,X(controlTrials,nStim+1:end),X2(controlTrials,nStim+1:end));
+    controlY = cat(1,deResp(controlTrials,n),preResp(controlTrials,n));
+    [~,tmpMu,tmpCov] = estimate(diffuseblm(size(controlX,2)),controlX,controlY,'Display',false);
+    tmpVar = diag(tmpCov);
+    contMu(n,:) = tmpMu;
+    contVar(n,:) = tmpVar;
 end
 
 %% Reformat Fitted parameters
@@ -119,3 +129,5 @@ stimBetaVar(:,validStim) = fitVar(:,2:nStim+1);
 
 respBeta = fitMu(:,[1, nStim+2:size(fitMu,2)]);
 respBetaVar = fitVar(:,[1, nStim+2:size(fitMu,2)]);
+contBeta = contMu;
+contBetaVar = contVar;

@@ -1,9 +1,9 @@
-winRad = 30;
+winRad = 25;
 winDiam = 2*winRad+1;
 stimIm = zeros(winDiam,winDiam);
 [yInd,xInd] = stimExpt.resRA.worldToSubscript(stimExpt.cellCentroids(:,1),stimExpt.cellCentroids(:,2));
 yInd = yInd+winRad; xInd = xInd+winRad;
-distBin = tmp.Dist<100 & tmp.Dist>30;
+distBin = tmp.Dist<1e3 & tmp.Dist>-1 & (tmp.betaBin > median(tmp.betaBin));
 refIm = bsxfun(@rdivide,stimExpt.rawStimIm,meanRef(resFOV1));
 
 for nStim = 1:size(validResp,2)
@@ -21,4 +21,4 @@ for nStim = 1:size(validResp,2)
 end
 
 stimIm = stimIm / sum(~isnan(validResp(distBin)));
-figure,imagesc(stimIm),
+figure,imagesc(stimIm),colorbar,
