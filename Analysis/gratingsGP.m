@@ -1,5 +1,5 @@
 %%
-% allResp = randomGratingsRespStruct(stimExpt);
+allResp = randomGratingsRespStruct(stimExpt);
 % [oH, oPh, gPar] = fitRandomGratingsGP(allResp);
 % tR = rgTuningCurvesGP(allResp, oH, oPh, gPar);
 % save('cvGPfits','oH','oPh','gPar','tR'),
@@ -64,7 +64,7 @@ figure,plot(5:95,prcBin,'linewidth',2)
 xlabel('Tuning Correlation Percentile'),
 ylabel('Mean Influence'),
 %%
-nNeuron = cSort(17),
+nNeuron = 157,
 X = [cosd(allResp.Dir),sind(allResp.Dir),...
     allResp.SF,allResp.TF,sqrt(allResp.spd)];
 % gratingBlock = zeros(length(allResp.Dir),1);
@@ -73,23 +73,29 @@ X = [cosd(allResp.Dir),sind(allResp.Dir),...
 % X = [cosd(allResp.Dir),sind(allResp.Dir),...
 %     allResp.SF,allResp.TF,sqrt(allResp.spd), gratingBlock];
 % Y = allResp.Y(:,nNeuron);
-Y = allResp.Y(:,nNeuron)/std(allResp.Y(:,nNeuron));
-% Y = sqrt(allResp.Y(:,nNeuron))/std(sqrt(allResp.Y(:,nNeuron)));
+% Y = allResp.Y(:,nNeuron)/std(allResp.Y(:,nNeuron));
+Y = sqrt(allResp.Y(:,nNeuron))/std(sqrt(allResp.Y(:,nNeuron)));
 
 hyp = struct;
-meanFunc = {@meanConst}; hyp.mean = 0;
-% meanFunc = [];
-covFun1 = {@covMask, {[1 1 0 0 0], {@covSE,'iso',[]}}};
+% meanFunc = {@meanConst}; hyp.mean = 0;
+meanFunc = [];
+% covFun1 = {@covMask, {[1 1 0 0 0], {@covSE,'iso',[]}}};
 % covFun2 = {@covMask, {[0 0 1 1 1], {@covSE,'ard',[]}}};
 % covFunc = {@covScale {@covProd, {covFun1, covFun2}}};
+% covFun2 = {@covMask, {[0 0 1 0 0], {@covSE,'iso',[]}}}';
+% covFun3 = {@covMask, {[0 0 0 1 0], {@covSE,'iso',[]}}}';
+% covFun4 = {@covMask, {[0 0 0 0 1], {@covSE,'iso',[]}}}';
+% covFunc = {@covScale {@covSum, {covFun1, covFun2, covFun3, covFun4}}};
+covFun1 = {@covMask, {[1 1 0 0 0], {@covSE,'iso',[]}}};
 covFun2 = {@covMask, {[0 0 1 0 0], {@covSE,'iso',[]}}}';
 covFun3 = {@covMask, {[0 0 0 1 0], {@covSE,'iso',[]}}}';
 covFun4 = {@covMask, {[0 0 0 0 1], {@covSE,'iso',[]}}}';
-covFunc = {@covScale {@covSum, {covFun1, covFun2, covFun3, covFun4}}};
+covFunc = {@covScale, {@covProd, {covFun1, covFun2, covFun3, covFun4}}};
+
 hyp.cov = zeros(eval(feval(covFunc{:})),1);
 
-% likFunc = {@likGauss};
-likFunc = {@likNegBinom, 'exp'};
+likFunc = {@likGauss};
+% likFunc = {@likNegBinom, 'exp'};
 % likFunc = {@likT};
 % likFunc = {@likPoisson,'exp'};
 % likFunc = {@likMix {{@likNegBinom, 'exp'} {@likGauss}}};
@@ -98,19 +104,19 @@ hyp.lik = zeros(eval(feval(likFunc{:})),1);
 % optHyp = minimize(hyp, @gp, -75, ...
 %         @infGaussLik, meanFunc, covFunc, likFunc, X, Y);
 % yMu = gp(optHyp, @infGaussLik, meanFunc, covFunc, likFunc, X, Y, X);
-optHyp = minimize(hyp, @gp, -75, ...
+optHyp = minimize(hyp, @gp, -60, ...
         @infLaplace, meanFunc, covFunc, likFunc, X, Y);
 yMu = gp(optHyp, @infLaplace, meanFunc, covFunc, likFunc, X, Y, X);
 
 exp(optHyp.cov(1:end-1))./range(X(:,2:end))',
 % optHyp.cov(1:end-1)
-figure,scatter(allResp.Dir,allResp.SF,[],sqrt(yMu),'filled'),
+figure,scatter(allResp.Dir,allResp.SF,[],yMu,'filled'),
 title('Predictions'),xlabel('Dir'),ylabel('SF'),colorbar,
-figure,scatter(allResp.Dir,allResp.SF,[],sqrt(Y),'filled'),
+figure,scatter(allResp.Dir,allResp.SF,[],Y,'filled'),
 title('Real Data'),xlabel('Dir'),ylabel('SF'),colorbar,
 % figure,scatter(allResp.Dir,allResp.SF,30/mean(Y)*(yMu+eps(1)-min(yMu)),allResp.spd,'filled'),title('Predictions'),xlabel('Dir'),ylabel('SF'),
 % figure,scatter(allResp.Dir,allResp.SF,30/mean(Y)*(Y+eps(1)-min(yMu)),allResp.spd,'filled'),title('Real Data'),xlabel('Dir'),ylabel('SF'),
-figure,plot(sqrt(Y),sqrt(yMu),'.'),xlabel('Real Values'),ylabel('Predicted Values'),
+figure,plot(Y,yMu,'.'),xlabel('Real Values'),ylabel('Predicted Values'),
 
 %%
 nCV = 10;

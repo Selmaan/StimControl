@@ -20,15 +20,22 @@ end
 distThresh = 25;
 [nRespMat, pRespMat, visResid, deResp, stimID, visOri, visCon, stimMag, mvSpd] =...
     calcStimShuffle(stimExpt, distThresh);
-% figure,plot(median(stimMag)),
+figure,plot(median(stimMag)),
+hold on,plot(mean(stimMag)),
+% figure,plot(median(zscore(stimMag')')),
+% hold on,plot(mean(zscore(stimMag')')),
+ 
+figure,imshow(repmat((stimExpt.rLin-100)/500,[1 1 3]),stimExpt.linRA),
+hold on,scatter(stimExpt.roiCentroid(stimExpt.targetLabel>=1,1),stimExpt.roiCentroid(stimExpt.targetLabel>=1,2),...
+    10,sqrt(mean(stimMag,2)),'filled'),
 
-[stimBeta,stimBetaVar,respBeta,respBetaVar,contBeta,contBetaVar,deResp,preResp,stimID,visOri,visCon,mvSpd] = ... 
-    influenceRegression(stimExpt, distThresh);
+% [stimBeta,stimBetaVar,respBeta,respBetaVar,contBeta,contBetaVar,deResp,preResp,stimID,visOri,visCon,mvSpd] = ... 
+%     influenceRegression(stimExpt, distThresh);
 % figure,imagesc(corrcoef(respBeta./sqrt(respBetaVar))),
 %%
 tmp.dBinWidth =60;
-validResp = stimBeta./sqrt(stimBetaVar);
-% validResp = nRespMat;
+% validResp = stimBeta./sqrt(stimBetaVar);
+validResp = nRespMat;
 
 tmp.normStimIm = stimExpt.procStimIm;
 tmp.threshStimIm = tmp.normStimIm>0;
@@ -40,7 +47,8 @@ tmp.overlapInd = stimExpt.cellFilts' * reshape(tmp.threshStimIm,512^2,size(valid
 validResp(tmp.overlapInd>0) = nan;
 % validResp = double(tmp.overlapInd>0);
 
-validResp(:,stimExpt.targetLabel<1)=nan;
+validResp(:,stimExpt.targetLabel<0.1)=nan;
+% validResp(:,stimExpt.targetLabel~=0)=nan;
 tmp.Dist = stimExpt.cellStimDistMat*stimExpt.xConvFactor;
 infDistBin = nan(500,1);
 for d=1:500
